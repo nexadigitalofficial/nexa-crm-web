@@ -1912,6 +1912,233 @@
       .trust-item { font-size: 12px; }
     }
 
+    /* ============================================================
+       KAPSAMLI MOBİL RESPONSIVE DÜZELTMELER
+    ============================================================ */
+
+    /* -- Genel section padding -- */
+    @media (max-width: 768px) {
+      .section {
+        padding: 60px 20px;
+      }
+      .section-header {
+        margin-bottom: 40px;
+      }
+      .section-subtitle {
+        font-size: 15px;
+      }
+      nav {
+        padding: 18px 20px;
+      }
+      .logo {
+        font-size: 20px;
+      }
+    }
+
+    /* -- Hero -- */
+    @media (max-width: 768px) {
+      .hero-content {
+        padding: 100px 20px 60px;
+      }
+      .hero-badge {
+        font-size: 11px;
+        padding: 10px 20px;
+        letter-spacing: 2px;
+      }
+      .hero h1 {
+        font-size: clamp(36px, 10vw, 60px);
+        letter-spacing: -1px;
+      }
+      .hero-subtitle {
+        font-size: clamp(16px, 4vw, 22px);
+        margin-bottom: 30px;
+      }
+      .hero-cta {
+        gap: 12px;
+      }
+      .btn {
+        padding: 14px 24px;
+        font-size: 14px;
+      }
+    }
+
+    /* -- Cards grid -- */
+    @media (max-width: 768px) {
+      .cards-grid {
+        grid-template-columns: 1fr !important;
+        gap: 24px;
+      }
+      .card-img {
+        height: 220px;
+      }
+      .card-body {
+        padding: 20px;
+      }
+    }
+
+    /* -- Stats -- */
+    @media (max-width: 768px) {
+      .stats-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      .stat-card {
+        padding: 30px 16px;
+      }
+      .stat-icon {
+        font-size: 32px;
+        margin-bottom: 12px;
+      }
+      .stat-number,
+      .counter {
+        font-size: 32px;
+      }
+      .stat-label {
+        font-size: 13px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* -- Map section -- */
+    @media (max-width: 768px) {
+      .map-section-header {
+        padding: 50px 20px 24px;
+      }
+      #mapContainer {
+        height: 400px;
+      }
+      .map-sidebar {
+        max-height: 300px;
+      }
+    }
+
+    /* -- Filter section -- */
+    @media (max-width: 768px) {
+      .filter-section {
+        padding: 20px;
+      }
+      .filter-buttons {
+        flex-direction: column;
+      }
+      .filter-buttons .btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+
+    /* -- Blog -- */
+    @media (max-width: 768px) {
+      .blog-slide {
+        grid-template-columns: 1fr;
+      }
+      .blog-nav.prev { left: 0; }
+      .blog-nav.next { right: 0; }
+    }
+
+    /* -- Testimonials -- */
+    @media (max-width: 768px) {
+      .testimonials-grid {
+        grid-template-columns: 1fr;
+        gap: 24px;
+      }
+      .testimonial {
+        padding: 28px 24px;
+      }
+    }
+
+    /* -- Contact form -- */
+    @media (max-width: 768px) {
+      .contact-form {
+        padding: 30px 20px;
+        border-radius: 20px;
+      }
+    }
+
+    /* -- Footer -- */
+    @media (max-width: 768px) {
+      footer {
+        padding: 50px 20px 30px;
+      }
+      .footer-brand h3 {
+        font-size: 24px;
+      }
+    }
+
+    /* -- Floating CTA -- */
+    @media (max-width: 768px) {
+      .floating-cta {
+        bottom: 20px;
+        right: 16px;
+        gap: 10px;
+      }
+      .float-btn {
+        width: 52px;
+        height: 52px;
+        font-size: 20px;
+      }
+    }
+
+    /* -- Awards -- */
+    @media (max-width: 768px) {
+      .awards-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      .award-card {
+        padding: 24px 16px;
+      }
+      .award-icon {
+        font-size: 36px;
+        margin-bottom: 12px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .awards-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* -- "Neden Yatırım" ve diğer inline grid alanları -- */
+    @media (max-width: 768px) {
+      [style*="grid-template-columns: repeat(auto-fit, minmax(250px"] {
+        grid-template-columns: 1fr !important;
+      }
+      [style*="padding: 50px"] {
+        padding: 30px 20px !important;
+      }
+    }
+
+    /* -- Genel ek düzeltmeler -- */
+    @media (max-width: 768px) {
+      .poi-controls {
+        padding: 10px 12px;
+        gap: 6px;
+      }
+      .poi-toggle {
+        font-size: 11px;
+        padding: 6px 10px;
+      }
+      .listing-contact-strip {
+        gap: 8px;
+      }
+      .strip-btn {
+        font-size: 11px;
+        padding: 10px 4px;
+      }
+      .map-modal-title {
+        font-size: 20px;
+      }
+      .map-modal-header {
+        padding: 18px 20px;
+      }
+    }
+
   </style>
 </head>
 <body>
