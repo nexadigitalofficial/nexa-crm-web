@@ -537,9 +537,10 @@ def start_scheduler():
 # BAŞLAT
 # ================================================================
 if __name__ == "__main__":
-    print("🚀 Unified Sunucu Başlatıldı: http://localhost:5000")
-    print("   🌐 Web Sitesi : http://localhost:5000/")
-    print("   📊 CRM Paneli : http://localhost:5000/crm")
+    port = int(os.environ.get("PORT", 5000))
+    print(f"🚀 Unified Sunucu Başlatıldı: http://0.0.0.0:{port}")
+    print(f"   🌐 Web Sitesi : http://0.0.0.0:{port}/")
+    print(f"   📊 CRM Paneli : http://0.0.0.0:{port}/crm")
     init_firebase_admin()
     start_scheduler()
-    app.run(debug=True, port=5000)
+    app.run(host="0.0.0.0", port=port, debug=False)
