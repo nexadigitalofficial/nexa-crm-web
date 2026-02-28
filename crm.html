@@ -1,0 +1,2440 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nexa CRM Pro - Süreç Yönetimi</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0e1a 0%, #1a1f35 100%);
+            color: #f1f5f9;
+            min-height: 100vh;
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 3px; }
+
+        .glass {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .glass-strong {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(30px);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .slide-in-right { animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+
+        /* KANBAN */
+        .kanban-board {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+            overflow-x: auto;
+            padding: 1rem;
+        }
+        .kanban-column { min-width: 280px; max-width: 350px; }
+        .kanban-card { cursor: grab; transition: all 0.2s; }
+        .kanban-card:active { cursor: grabbing; opacity: 0.8; }
+        .kanban-card.dragging { opacity: 0.5; }
+        .drop-zone { min-height: 100px; border: 2px dashed rgba(99, 102, 241, 0.3); border-radius: 12px; }
+        .drop-zone.drag-over { background: rgba(99, 102, 241, 0.1); border-color: #6366f1; }
+
+        .chart-container { position: relative; height: 280px; }
+
+        .stat-card {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            transition: all 0.3s;
+        }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(99, 102, 241, 0.2); }
+
+        .progress-bar { height: 8px; background: rgba(99, 102, 241, 0.2); border-radius: 999px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #6366f1, #8b5cf6); border-radius: 999px; transition: width 0.5s ease; }
+
+        .badge { display: inline-flex; align-items: center; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
+        .badge-primary { background: rgba(99, 102, 241, 0.2); color: #a5b4fc; }
+        .badge-success { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; }
+        .badge-warning { background: rgba(245, 158, 11, 0.2); color: #fcd34d; }
+        .badge-danger { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+        .badge-info { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+        .badge-website { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3); }
+        .badge-meta { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
+        .badge-whatsapp { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+        .badge-manual { background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148,163,184,0.2); }
+
+        .btn { padding: 0.75rem 1.5rem; border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; display: inline-flex; align-items: center; gap: 0.5rem; }
+        .btn-primary { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4); }
+        .btn-primary:disabled { opacity: 0.5; transform: none; cursor: not-allowed; }
+        .btn-secondary { background: rgba(99, 102, 241, 0.1); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.3); }
+        .btn-secondary:hover { background: rgba(99, 102, 241, 0.2); }
+        .btn-danger { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+        .btn-danger:hover { background: rgba(239, 68, 68, 0.25); }
+
+        .tab-btn { padding: 0.75rem 1.5rem; border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; color: #94a3b8; background: transparent; border: none; }
+        .tab-btn.active { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; }
+
+        input, textarea, select {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            color: #f1f5f9;
+            width: 100%;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+        input:focus, textarea:focus, select:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
+        input::placeholder, textarea::placeholder { color: #475569; }
+        select option { background: #1e293b; }
+
+        .modal-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); z-index: 999; }
+        .modal-content { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; z-index: 1000; }
+
+        /* LEAD DETAIL PANEL */
+        .lead-panel {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 480px;
+            max-width: 95vw;
+            height: 100vh;
+            z-index: 998;
+            overflow-y: auto;
+            box-shadow: -20px 0 60px rgba(0,0,0,0.5);
+        }
+
+        /* TIMELINE */
+        .timeline { position: relative; padding-left: 2rem; }
+        .timeline::before { content: ''; position: absolute; left: 0.5rem; top: 0; bottom: 0; width: 2px; background: linear-gradient(180deg, #6366f1, #8b5cf6); }
+        .timeline-item { position: relative; padding-bottom: 1.5rem; }
+        .timeline-dot { position: absolute; left: -1.75rem; width: 12px; height: 12px; border-radius: 50%; background: #6366f1; border: 2px solid #1a1f35; }
+        .timeline-dot.comment { background: #10b981; }
+        .timeline-dot.reminder { background: #f59e0b; }
+        .timeline-dot.stage { background: #8b5cf6; }
+
+        /* REMINDER CARD */
+        .reminder-card {
+            background: rgba(245, 158, 11, 0.08);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            border-radius: 12px;
+            padding: 0.875rem 1rem;
+            transition: all 0.2s;
+        }
+        .reminder-card.overdue { background: rgba(239, 68, 68, 0.08); border-color: rgba(239, 68, 68, 0.25); }
+        .reminder-card.done { opacity: 0.45; }
+
+        /* LEAD CARD */
+        .lead-card {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 1.25rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .lead-card:hover { border-color: rgba(99, 102, 241, 0.4); background: rgba(99, 102, 241, 0.06); transform: translateY(-1px); }
+        .lead-card.active { border-color: #6366f1; background: rgba(99, 102, 241, 0.1); }
+
+        /* SOURCE ICON */
+        .source-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+        .source-website { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+        .source-meta { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+        .source-whatsapp { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+        .source-manual { background: rgba(148, 163, 184, 0.15); color: #94a3b8; }
+
+        /* NOTIFICATION BADGE */
+        .notif-badge { position: absolute; top: -4px; right: -4px; background: #ef4444; color: white; border-radius: 999px; font-size: 10px; font-weight: 700; min-width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; padding: 0 4px; }
+
+        @media (max-width: 768px) {
+            .kanban-board { grid-template-columns: 1fr; }
+            .modal-content { width: 95%; max-height: 95vh; }
+            .lead-panel { width: 100%; }
+        }
+
+        .spinner { border: 3px solid rgba(99, 102, 241, 0.2); border-top-color: #6366f1; border-radius: 50%; width: 40px; height: 40px; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .auth-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+        .auth-box { width: 100%; max-width: 420px; }
+        .auth-toggle { display: flex; background: rgba(30, 41, 59, 0.5); border-radius: 12px; padding: 4px; margin-bottom: 1.5rem; }
+        .auth-toggle button { flex: 1; padding: 0.75rem; border-radius: 8px; border: none; background: transparent; color: #94a3b8; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .auth-toggle button.active { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; }
+
+        /* TRANSITION */
+        .v-enter-active, .v-leave-active { transition: opacity 0.2s; }
+        .v-enter-from, .v-leave-to { opacity: 0; }
+
+        /* SCROLLABLE PANEL */
+        .panel-scroll { scrollbar-width: thin; scrollbar-color: #4f46e5 transparent; }
+
+        /* COMMENT BOX */
+        .comment-box { background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.15); border-radius: 10px; padding: 0.75rem; }
+
+        /* FILTER CHIP */
+        .filter-chip { padding: 0.4rem 1rem; border-radius: 999px; font-size: 0.8rem; font-weight: 600; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); color: #94a3b8; transition: all 0.2s; white-space: nowrap; }
+        .filter-chip.active { background: rgba(99,102,241,0.2); border-color: rgba(99,102,241,0.5); color: #a5b4fc; }
+
+        /* FOLLOWUP PLAN */
+        .followup-card {
+            background: linear-gradient(135deg, rgba(14,165,233,0.08), rgba(99,102,241,0.05));
+            border: 1px solid rgba(14,165,233,0.25);
+            border-radius: 14px;
+            padding: 1rem;
+        }
+        .followup-week {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            padding: 0.75rem;
+            transition: all 0.2s;
+        }
+        .followup-week.sent {
+            background: rgba(16,185,129,0.08);
+            border-color: rgba(16,185,129,0.2);
+        }
+        .followup-week.pending {
+            background: rgba(245,158,11,0.06);
+            border-color: rgba(245,158,11,0.18);
+        }
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        .pulse-dot { animation: pulse-dot 1.5s ease-in-out infinite; }
+    </style>
+</head>
+<body>
+<div id="app">
+    <!-- LOADING -->
+    <div v-if="uiLoading" class="auth-container">
+        <div class="text-center">
+            <div class="spinner mx-auto mb-4"></div>
+            <p class="text-gray-400">Yükleniyor...</p>
+        </div>
+    </div>
+
+    <!-- AUTH SCREEN -->
+    <div v-else-if="!user" class="auth-container">
+        <div class="auth-box fade-in">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 mb-4">
+                    <i class="fas fa-chart-line text-3xl text-white"></i>
+                </div>
+                <h1 class="text-3xl font-bold mb-2">Nexa CRM Pro</h1>
+                <p class="text-gray-400">Akıllı Süreç Yönetim Sistemi</p>
+            </div>
+            <div class="glass-strong rounded-2xl p-8 shadow-2xl">
+                <div class="auth-toggle">
+                    <button @click="authMode = 'signin'" :class="{ active: authMode === 'signin' }">
+                        <i class="fas fa-sign-in-alt mr-2"></i>Giriş Yap
+                    </button>
+                    <button @click="authMode = 'register'" :class="{ active: authMode === 'register' }">
+                        <i class="fas fa-user-plus mr-2"></i>Kayıt Ol
+                    </button>
+                </div>
+                <div v-if="authError" class="mb-4 p-4 rounded-xl bg-red-500/10 border border-red-500/20">
+                    <p class="text-red-400 text-sm flex items-center gap-2">
+                        <i class="fas fa-exclamation-circle"></i>{{ authError }}
+                    </p>
+                </div>
+                <form v-if="authMode === 'signin'" @submit.prevent="signIn" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-gray-300"><i class="fas fa-envelope mr-2"></i>E-posta</label>
+                        <input v-model="email" type="email" placeholder="ornek@email.com" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-gray-300"><i class="fas fa-lock mr-2"></i>Şifre</label>
+                        <input v-model="password" type="password" placeholder="••••••••" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-full justify-center" :disabled="authLoading">
+                        <i class="fas" :class="authLoading ? 'fa-spinner fa-spin' : 'fa-sign-in-alt'"></i>
+                        {{ authLoading ? 'Giriş yapılıyor...' : 'Giriş Yap' }}
+                    </button>
+                </form>
+                <form v-else @submit.prevent="register" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-gray-300"><i class="fas fa-user mr-2"></i>Ad Soyad</label>
+                        <input v-model="displayName" type="text" placeholder="Ad Soyad" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-gray-300"><i class="fas fa-envelope mr-2"></i>E-posta</label>
+                        <input v-model="email" type="email" placeholder="ornek@email.com" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-gray-300"><i class="fas fa-lock mr-2"></i>Şifre (min. 6 karakter)</label>
+                        <input v-model="password" type="password" placeholder="••••••••" required minlength="6">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-full justify-center" :disabled="authLoading">
+                        <i class="fas" :class="authLoading ? 'fa-spinner fa-spin' : 'fa-user-plus'"></i>
+                        {{ authLoading ? 'Hesap oluşturuluyor...' : 'Kayıt Ol' }}
+                    </button>
+                </form>
+                <div class="relative my-6">
+                    <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-700"></div></div>
+                    <div class="relative flex justify-center text-sm"><span class="px-4 bg-transparent text-gray-400">veya</span></div>
+                </div>
+                <button @click="signInWithGoogle" class="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl bg-white text-gray-900 font-semibold hover:bg-gray-100 transition-all" :disabled="authLoading">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    <span>Google ile {{ authMode === 'signin' ? 'Giriş' : 'Kayıt Ol' }}</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP -->
+    <div v-else>
+        <!-- HEADER -->
+        <header class="glass-strong sticky top-0 z-50 border-b border-white/10">
+            <div class="max-w-7xl mx-auto px-4 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                            <i class="fas fa-chart-line text-xl text-white"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-lg font-bold">Nexa CRM Pro</h1>
+                            <p class="text-xs text-gray-400">{{ user.email }}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <!-- REMINDER BELL -->
+                        <button @click="activeView = 'leads'; leadTab = 'reminders'" class="relative p-2 rounded-xl hover:bg-white/5 transition-all">
+                            <i class="fas fa-bell text-gray-400" :class="{ 'text-yellow-400': pendingRemindersCount > 0 }"></i>
+                            <span v-if="pendingRemindersCount > 0" class="notif-badge">{{ pendingRemindersCount > 9 ? '9+' : pendingRemindersCount }}</span>
+                        </button>
+                        <button @click="showMenu = !showMenu" class="p-2 rounded-xl hover:bg-white/5">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- MENU DROPDOWN -->
+        <transition>
+            <div v-if="showMenu" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" @click="showMenu = false">
+                <div class="absolute top-20 right-4 glass-strong rounded-2xl p-2 min-w-[200px] shadow-2xl" @click.stop>
+                    <button @click="exportData('excel')" class="w-full text-left px-4 py-3 rounded-xl hover:bg-white/5 flex items-center gap-3">
+                        <i class="fas fa-file-excel text-green-400"></i><span>Excel İndir</span>
+                    </button>
+                    <button @click="exportData('json')" class="w-full text-left px-4 py-3 rounded-xl hover:bg-white/5 flex items-center gap-3">
+                        <i class="fas fa-download text-blue-400"></i><span>Yedek Al</span>
+                    </button>
+                    <div class="border-t border-white/10 my-2"></div>
+                    <button @click="logout" class="w-full text-left px-4 py-3 rounded-xl hover:bg-white/5 flex items-center gap-3 text-red-400">
+                        <i class="fas fa-sign-out-alt"></i><span>Çıkış Yap</span>
+                    </button>
+                </div>
+            </div>
+        </transition>
+
+        <!-- NAVIGATION -->
+        <div class="glass border-b border-white/10">
+            <div class="max-w-7xl mx-auto px-4">
+                <div class="flex gap-1 overflow-x-auto py-2">
+                    <button @click="activeView = 'dashboard'" :class="{ active: activeView === 'dashboard' }" class="tab-btn whitespace-nowrap">
+                        <i class="fas fa-chart-pie mr-2"></i>Dashboard
+                    </button>
+                    <button @click="activeView = 'pipeline'" :class="{ active: activeView === 'pipeline' }" class="tab-btn whitespace-nowrap">
+                        <i class="fas fa-columns mr-2"></i>Pipeline
+                    </button>
+                    <button @click="activeView = 'contacts'" :class="{ active: activeView === 'contacts' }" class="tab-btn whitespace-nowrap">
+                        <i class="fas fa-users mr-2"></i>Kişiler
+                    </button>
+                    <button @click="activeView = 'leads'; leadTab = 'list'" :class="{ active: activeView === 'leads' }" class="tab-btn whitespace-nowrap relative">
+                        <i class="fas fa-satellite-dish mr-2"></i>Leadler
+                        <span v-if="webLeads.length > 0" class="absolute -top-1 -right-1 bg-indigo-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs font-bold">{{ webLeads.length > 9 ? '9+' : webLeads.length }}</span>
+                        <i class="fas fa-satellite-dish mr-2"></i>Lead Takip
+                        <span v-if="pendingRemindersCount > 0" class="ml-1 inline-flex items-center justify-center bg-yellow-500 text-black text-xs font-bold rounded-full w-5 h-5">{{ pendingRemindersCount }}</span>
+                    </button>
+                    <button @click="activeView = 'analytics'" :class="{ active: activeView === 'analytics' }" class="tab-btn whitespace-nowrap">
+                        <i class="fas fa-chart-line mr-2"></i>Analitik
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <main class="max-w-7xl mx-auto px-4 py-6">
+
+            <!-- ═══════════════════ DASHBOARD ═══════════════════ -->
+            <div v-if="activeView === 'dashboard'" class="space-y-6">
+                <!-- STATS -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="stat-card rounded-2xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
+                                <i class="fas fa-users text-blue-400 text-xl"></i>
+                            </div>
+                            <span class="text-3xl font-bold">{{ dashboardStats.total }}</span>
+                        </div>
+                        <p class="text-gray-400 text-sm font-medium">Toplam Kayıt</p>
+                        <div class="mt-2 text-xs text-green-400"><i class="fas fa-arrow-up mr-1"></i>{{ dashboardStats.thisWeek }} bu hafta</div>
+                    </div>
+                    <div class="stat-card rounded-2xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center">
+                                <i class="fas fa-check-circle text-green-400 text-xl"></i>
+                            </div>
+                            <span class="text-3xl font-bold">{{ dashboardStats.closed }}</span>
+                        </div>
+                        <p class="text-gray-400 text-sm font-medium">Tamamlanan</p>
+                        <div class="mt-2 text-xs text-gray-400">%{{ conversionRate }} dönüşüm</div>
+                    </div>
+                    <div class="stat-card rounded-2xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
+                                <i class="fas fa-lira-sign text-purple-400 text-xl"></i>
+                            </div>
+                            <span class="text-2xl font-bold">{{ formatCurrency(dashboardStats.revenue) }}</span>
+                        </div>
+                        <p class="text-gray-400 text-sm font-medium">Toplam Gelir</p>
+                        <div class="mt-2 text-xs text-purple-400">{{ formatCurrency(dashboardStats.avgDeal) }} ort. anlaşma</div>
+                    </div>
+                    <div class="stat-card rounded-2xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 rounded-xl bg-orange-500/20 flex items-center justify-center">
+                                <i class="fas fa-clock text-orange-400 text-xl"></i>
+                            </div>
+                            <span class="text-3xl font-bold">{{ dashboardStats.avgDays }}</span>
+                        </div>
+                        <p class="text-gray-400 text-sm font-medium">Ortalama Süre (gün)</p>
+                        <div class="mt-2 text-xs text-gray-400">Kapanma süresi</div>
+                    </div>
+                </div>
+
+                <!-- REMINDERS WIDGET -->
+                <div v-if="upcomingReminders.length > 0" class="glass-strong rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold flex items-center gap-2">
+                            <i class="fas fa-bell text-yellow-400"></i>Yaklaşan Hatırlatmalar
+                        </h3>
+                        <button @click="activeView = 'leads'; leadTab = 'reminders'" class="text-sm text-indigo-400 hover:text-indigo-300">
+                            Tümünü gör →
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div v-for="r in upcomingReminders.slice(0,4)" :key="r.id"
+                             :class="['reminder-card', isOverdue(r.dueDate) ? 'overdue' : '']">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="flex-1 min-w-0">
+                                    <p class="font-semibold text-sm truncate">{{ r.contactName }}</p>
+                                    <p class="text-xs text-gray-400 mt-1 line-clamp-2">{{ r.text }}</p>
+                                </div>
+                                <div class="text-right flex-shrink-0">
+                                    <p :class="['text-xs font-bold', isOverdue(r.dueDate) ? 'text-red-400' : 'text-yellow-400']">
+                                        {{ formatReminderDate(r.dueDate) }}
+                                    </p>
+                                    <button @click="doneReminder(r.id)" class="mt-1 text-xs text-gray-500 hover:text-green-400">
+                                        <i class="fas fa-check mr-1"></i>Tamam
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SOURCE STATS -->
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="glass rounded-2xl p-4 text-center">
+                        <div class="source-icon source-website mx-auto mb-2"><i class="fas fa-globe"></i></div>
+                        <p class="text-2xl font-bold">{{ contactsBySource('website') }}</p>
+                        <p class="text-xs text-gray-400 mt-1">Web Sitesi</p>
+                    </div>
+                    <div class="glass rounded-2xl p-4 text-center">
+                        <div class="source-icon source-meta mx-auto mb-2"><i class="fab fa-facebook-f"></i></div>
+                        <p class="text-2xl font-bold">{{ contactsBySource('meta') }}</p>
+                        <p class="text-xs text-gray-400 mt-1">Meta Ads</p>
+                    </div>
+                    <div class="glass rounded-2xl p-4 text-center">
+                        <div class="source-icon source-whatsapp mx-auto mb-2"><i class="fab fa-whatsapp"></i></div>
+                        <p class="text-2xl font-bold">{{ contactsBySource('whatsapp') }}</p>
+                        <p class="text-xs text-gray-400 mt-1">WhatsApp</p>
+                    </div>
+                </div>
+
+                <!-- CHARTS ROW -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="glass-strong rounded-2xl p-6">
+                        <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                            <i class="fas fa-filter text-indigo-400"></i>Dönüşüm Hunisi
+                        </h3>
+                        <div class="chart-container"><canvas ref="funnelChart"></canvas></div>
+                    </div>
+                    <div class="glass-strong rounded-2xl p-6">
+                        <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                            <i class="fas fa-chart-bar text-purple-400"></i>Pipeline Değeri
+                        </h3>
+                        <div class="chart-container"><canvas ref="pipelineChart"></canvas></div>
+                    </div>
+                </div>
+
+                <!-- ACTIVITY TIMELINE -->
+                <div class="glass-strong rounded-2xl p-6">
+                    <h3 class="text-lg font-bold mb-6 flex items-center gap-2">
+                        <i class="fas fa-history text-blue-400"></i>Son Aktiviteler
+                    </h3>
+                    <div class="timeline">
+                        <div v-for="activity in recentActivities" :key="activity.id" class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="glass rounded-xl p-4">
+                                <div class="flex items-start justify-between mb-2">
+                                    <div>
+                                        <p class="font-semibold">{{ activity.title }}</p>
+                                        <p class="text-sm text-gray-400">{{ activity.description }}</p>
+                                    </div>
+                                    <span class="text-xs text-gray-500 ml-3 flex-shrink-0">{{ formatDate(activity.date) }}</span>
+                                </div>
+                                <span :class="getStageBadgeClass(activity.stage)" class="badge">{{ activity.stage }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══════════════════ PIPELINE ═══════════════════ -->
+            <div v-if="activeView === 'pipeline'" class="space-y-6">
+                <div class="glass rounded-2xl p-4">
+                    <div class="flex gap-2 overflow-x-auto">
+                        <button v-for="cat in pipelineCategories" :key="cat.id"
+                            @click="currentPipeline = cat.id"
+                            :class="{ 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white': currentPipeline === cat.id }"
+                            class="px-4 py-2 rounded-xl font-medium text-sm whitespace-nowrap transition-all hover:bg-white/5 text-gray-300">
+                            <i :class="cat.icon" class="mr-2"></i>{{ cat.label }}
+                        </button>
+                    </div>
+                </div>
+                <div class="kanban-board">
+                    <div v-for="stage in currentStages" :key="stage.id" class="kanban-column">
+                        <div class="glass-strong rounded-2xl p-4">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-3 h-3 rounded-full" :style="{ background: stage.color }"></div>
+                                    <h3 class="font-bold">{{ stage.name }}</h3>
+                                </div>
+                                <span class="badge badge-primary">{{ getStageCount(stage.id) }}</span>
+                            </div>
+                            <div class="space-y-3 drop-zone"
+                                 @drop="handleDrop($event, stage.id)"
+                                 @dragover="handleDragOver"
+                                 @dragleave="handleDragLeave">
+                                <div v-for="contact in getStageContacts(stage.id)" :key="contact.id"
+                                     class="kanban-card glass rounded-xl p-4 cursor-pointer"
+                                     draggable="true"
+                                     @dragstart="handleDragStart($event, contact)"
+                                     @click="openContactDetail(contact)">
+                                    <div class="flex items-start justify-between mb-3">
+                                        <div class="flex-1">
+                                            <div class="flex items-center gap-2 mb-1">
+                                                <h4 class="font-semibold">{{ contact.name }}</h4>
+                                                <div v-if="contact.source" :class="['source-icon', 'source-' + contact.source]" style="width:20px;height:20px;font-size:10px;border-radius:5px;">
+                                                    <i :class="getSourceIcon(contact.source)"></i>
+                                                </div>
+                                            </div>
+                                            <p class="text-xs text-gray-400">{{ contact.phone }}</p>
+                                        </div>
+                                        <i class="fas fa-grip-vertical text-gray-600"></i>
+                                    </div>
+                                    <div v-if="contact.price" class="mb-3">
+                                        <p class="text-lg font-bold text-indigo-400">{{ formatCurrency(contact.price) }}</p>
+                                    </div>
+                                    <div class="flex items-center justify-between text-xs">
+                                        <span class="text-gray-500"><i class="fas fa-clock mr-1"></i>{{ getDaysInStage(contact) }} gün</span>
+                                        <div class="flex items-center gap-2">
+                                            <span v-if="getContactReminderCount(contact.id) > 0" class="text-yellow-400">
+                                                <i class="fas fa-bell mr-1"></i>{{ getContactReminderCount(contact.id) }}
+                                            </span>
+                                            <span v-if="contact.appointmentDate" class="text-yellow-400">
+                                                <i class="fas fa-calendar mr-1"></i>Randevu
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button @click="openAddContact(stage.id)" class="w-full mt-3 p-2 rounded-xl border border-dashed border-gray-600 hover:border-indigo-500 hover:bg-indigo-500/10 transition-all text-sm text-gray-400 hover:text-indigo-400">
+                                <i class="fas fa-plus mr-2"></i>Ekle
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══════════════════ CONTACTS ═══════════════════ -->
+            <div v-if="activeView === 'contacts'" class="space-y-6">
+                <div class="glass rounded-2xl p-4">
+                    <div class="flex gap-4 flex-wrap">
+                        <div class="flex-1 min-w-0">
+                            <input v-model="searchQuery" type="text" placeholder="İsim, telefon veya ilçe ara...">
+                        </div>
+                        <button @click="openAddContact()" class="btn btn-primary">
+                            <i class="fas fa-plus"></i>Yeni Kayıt
+                        </button>
+                        <button @click="openImportModal()" class="btn btn-secondary">
+                            <i class="fas fa-file-excel"></i>Excel İçe Aktar
+                        </button>
+                    </div>
+                </div>
+                <div class="glass-strong rounded-2xl overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-white/5">
+                                <tr>
+                                    <th class="text-left p-4 font-semibold">İsim</th>
+                                    <th class="text-left p-4 font-semibold">Kaynak</th>
+                                    <th class="text-left p-4 font-semibold">Kategori</th>
+                                    <th class="text-left p-4 font-semibold">Aşama</th>
+                                    <th class="text-left p-4 font-semibold">Değer</th>
+                                    <th class="text-left p-4 font-semibold">Tarih</th>
+                                    <th class="text-left p-4 font-semibold">İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="contact in filteredContacts" :key="contact.id" class="border-t border-white/5 hover:bg-white/5 transition-colors">
+                                    <td class="p-4">
+                                        <div>
+                                            <p class="font-semibold">{{ contact.name }}</p>
+                                            <p class="text-sm text-gray-400">{{ contact.phone }}</p>
+                                        </div>
+                                    </td>
+                                    <td class="p-4">
+                                        <span :class="'badge badge-' + (contact.source || 'manual')">
+                                            <i :class="[getSourceIcon(contact.source), 'mr-1']"></i>
+                                            {{ getSourceLabel(contact.source) }}
+                                        </span>
+                                    </td>
+                                    <td class="p-4">
+                                        <span class="badge badge-info">{{ getCategoryLabel(contact.category) }}</span>
+                                    </td>
+                                    <td class="p-4">
+                                        <span :class="getStageBadgeClass(contact.stage)" class="badge">{{ contact.stage }}</span>
+                                    </td>
+                                    <td class="p-4 font-semibold text-indigo-400">
+                                        {{ contact.price ? formatCurrency(contact.price) : '-' }}
+                                    </td>
+                                    <td class="p-4 text-sm text-gray-400">{{ formatDate(contact.createdAt) }}</td>
+                                    <td class="p-4">
+                                        <button @click="openContactDetail(contact)" class="btn btn-secondary py-2 px-4">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr v-if="filteredContacts.length === 0">
+                                    <td colspan="7" class="p-8 text-center text-gray-500">
+                                        <i class="fas fa-search text-3xl mb-3 block opacity-30"></i>
+                                        Kayıt bulunamadı
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══════════════════ LEAD TAKİP ═══════════════════ -->
+            <div v-if="activeView === 'leads'" class="space-y-6">
+                <!-- TABS -->
+                <div class="glass rounded-2xl p-2 flex gap-2">
+                    <button @click="leadTab = 'list'" :class="{ active: leadTab === 'list' }" class="tab-btn flex-1 justify-center text-sm">
+                        <i class="fas fa-list mr-2"></i>Lead Listesi
+                    </button>
+                    <button @click="leadTab = 'reminders'" :class="{ active: leadTab === 'reminders' }" class="tab-btn flex-1 justify-center text-sm relative">
+                        <i class="fas fa-bell mr-2"></i>Hatırlatmalar
+                        <span v-if="pendingRemindersCount > 0" class="ml-1 inline-flex items-center justify-center bg-yellow-500 text-black text-xs font-bold rounded-full w-5 h-5">{{ pendingRemindersCount }}</span>
+                    </button>
+                </div>
+
+                <!-- LEAD LIST TAB -->
+                <div v-if="leadTab === 'list'">
+                    <!-- FILTERS -->
+                    <div class="glass rounded-2xl p-4 mb-4">
+                        <div class="flex flex-wrap gap-3 items-center">
+                            <div class="flex-1 min-w-48">
+                                <input v-model="leadSearch" type="text" placeholder="İsim veya telefon ara...">
+                            </div>
+                            <div class="flex gap-2 flex-wrap">
+                                <button @click="leadSourceFilter = ''" :class="{ active: leadSourceFilter === '' }" class="filter-chip">Tümü</button>
+                                <button @click="leadSourceFilter = 'website'" :class="{ active: leadSourceFilter === 'website' }" class="filter-chip">
+                                    <i class="fas fa-globe mr-1"></i>Web <span v-if="webLeads.length > 0" class="ml-1 bg-indigo-500 text-white rounded-full px-1.5 text-xs">{{ webLeads.length }}</span>
+                                </button>
+                                <button @click="leadSourceFilter = 'meta'" :class="{ active: leadSourceFilter === 'meta' }" class="filter-chip">
+                                    <i class="fab fa-facebook-f mr-1"></i>Meta
+                                </button>
+                                <button @click="leadSourceFilter = 'whatsapp'" :class="{ active: leadSourceFilter === 'whatsapp' }" class="filter-chip">
+                                    <i class="fab fa-whatsapp mr-1"></i>WhatsApp
+                                </button>
+                                <button @click="leadSourceFilter = 'manual'" :class="{ active: leadSourceFilter === 'manual' }" class="filter-chip">
+                                    <i class="fas fa-pencil mr-1"></i>Manuel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- LEAD GRID -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                        <div v-for="contact in filteredLeads" :key="contact.id"
+                             :class="['lead-card', activeLeadId === contact.id ? 'active' : '']"
+                             @click="openLeadPanel(contact)">
+                            <div class="flex items-start gap-3 mb-3">
+                                <div :class="['source-icon', 'source-' + (contact.source || 'manual')]">
+                                    <i :class="getSourceIcon(contact.source)"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="font-semibold truncate">
+                                        {{ contact.name }}
+                                        <span v-if="contact._fromWeb && contact.status === 'Yeni'" style="background:#3b82f6;color:#fff;font-size:0.6rem;font-weight:700;padding:2px 6px;border-radius:4px;margin-left:5px;vertical-align:middle;">YENİ</span>
+                                    </h4>
+                                    <p class="text-sm text-gray-400">{{ contact.phone }}</p>
+                                </div>
+                                <div class="flex flex-col items-end gap-1">
+                                    <span :class="getStageBadgeClass(contact.stage)" class="badge" style="font-size:0.65rem;padding:0.2rem 0.5rem;">{{ contact.stage }}</span>
+                                    <span v-if="getContactReminderCount(contact.id) > 0" class="text-yellow-400 text-xs">
+                                        <i class="fas fa-bell mr-1"></i>{{ getContactReminderCount(contact.id) }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between text-xs text-gray-500">
+                                <span><i class="fas fa-tag mr-1"></i>{{ getCategoryLabel(contact.category) }}</span>
+                                <span v-if="contact.price" class="text-indigo-400 font-semibold">{{ formatCurrency(contact.price) }}</span>
+                                <span>{{ formatDate(contact.createdAt) }}</span>
+                            </div>
+                            <div v-if="contact.notes" class="mt-2 text-xs text-gray-500 line-clamp-1 border-t border-white/5 pt-2">
+                                <i class="fas fa-comment-dots mr-1"></i>{{ contact.notes }}
+                            </div>
+                        </div>
+                        <div v-if="filteredLeads.length === 0" class="col-span-3 text-center py-16 text-gray-500">
+                            <i class="fas fa-satellite-dish text-4xl mb-4 block opacity-20"></i>
+                            <p>Kayıt bulunamadı</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- REMINDERS TAB -->
+                <div v-if="leadTab === 'reminders'" class="space-y-4">
+                    <!-- STATS -->
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="glass rounded-2xl p-4 text-center">
+                            <p class="text-2xl font-bold text-red-400">{{ overdueReminders.length }}</p>
+                            <p class="text-xs text-gray-400 mt-1">Gecikmiş</p>
+                        </div>
+                        <div class="glass rounded-2xl p-4 text-center">
+                            <p class="text-2xl font-bold text-yellow-400">{{ todayReminders.length }}</p>
+                            <p class="text-xs text-gray-400 mt-1">Bugün</p>
+                        </div>
+                        <div class="glass rounded-2xl p-4 text-center">
+                            <p class="text-2xl font-bold text-blue-400">{{ upcomingReminders.length }}</p>
+                            <p class="text-xs text-gray-400 mt-1">Yaklaşan</p>
+                        </div>
+                    </div>
+
+                    <!-- REMINDER LIST -->
+                    <div class="glass-strong rounded-2xl p-6">
+                        <h3 class="text-lg font-bold mb-4">Tüm Hatırlatmalar</h3>
+                        <div v-if="allActiveReminders.length === 0" class="text-center py-8 text-gray-500">
+                            <i class="fas fa-bell-slash text-3xl mb-3 block opacity-20"></i>
+                            <p>Bekleyen hatırlatma yok</p>
+                        </div>
+                        <div class="space-y-3">
+                            <div v-for="r in allActiveReminders" :key="r.id"
+                                 :class="['reminder-card', isOverdue(r.dueDate) ? 'overdue' : '']">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="flex-1 min-w-0">
+                                        <button @click="openLeadPanelById(r.contactId)" class="font-semibold text-sm hover:text-indigo-300 transition-colors">
+                                            {{ r.contactName }} →
+                                        </button>
+                                        <p class="text-sm text-gray-300 mt-1">{{ r.text }}</p>
+                                        <p :class="['text-xs mt-1 font-medium', isOverdue(r.dueDate) ? 'text-red-400' : 'text-yellow-400']">
+                                            <i class="fas fa-clock mr-1"></i>{{ formatReminderDate(r.dueDate) }}
+                                        </p>
+                                    </div>
+                                    <div class="flex gap-2 flex-shrink-0">
+                                        <button @click="doneReminder(r.id)" class="btn btn-secondary py-1 px-3 text-xs">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                        <button @click="deleteReminderFn(r.id)" class="btn btn-danger py-1 px-3 text-xs">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DONE REMINDERS -->
+                    <div v-if="doneReminders.length > 0" class="glass rounded-2xl p-6">
+                        <h3 class="text-base font-bold mb-4 text-gray-500">Tamamlananlar ({{ doneReminders.length }})</h3>
+                        <div class="space-y-2">
+                            <div v-for="r in doneReminders.slice(0,5)" :key="r.id" class="reminder-card done">
+                                <div class="flex items-center justify-between gap-2">
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-400">{{ r.contactName }}</p>
+                                        <p class="text-xs text-gray-500">{{ r.text }}</p>
+                                    </div>
+                                    <button @click="deleteReminderFn(r.id)" class="text-gray-600 hover:text-red-400 text-xs"><i class="fas fa-times"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══════════════════ ANALYTICS ═══════════════════ -->
+            <div v-if="activeView === 'analytics'" class="space-y-6">
+                <!-- KPI ROW -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="glass rounded-2xl p-4 text-center">
+                        <p class="text-3xl font-bold text-indigo-400">{{ dashboardStats.total }}</p>
+                        <p class="text-xs text-gray-400 mt-1">Toplam Lead</p>
+                    </div>
+                    <div class="glass rounded-2xl p-4 text-center">
+                        <p class="text-3xl font-bold text-green-400">%{{ conversionRate }}</p>
+                        <p class="text-xs text-gray-400 mt-1">Dönüşüm Oranı</p>
+                    </div>
+                    <div class="glass rounded-2xl p-4 text-center">
+                        <p class="text-3xl font-bold text-purple-400">{{ dashboardStats.avgDays }}</p>
+                        <p class="text-xs text-gray-400 mt-1">Ort. Kapanma (gün)</p>
+                    </div>
+                    <div class="glass rounded-2xl p-4 text-center">
+                        <p class="text-2xl font-bold text-yellow-400">{{ formatCurrency(dashboardStats.revenue) }}</p>
+                        <p class="text-xs text-gray-400 mt-1">Toplam Gelir</p>
+                    </div>
+                </div>
+
+                <!-- CHARTS -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="glass-strong rounded-2xl p-6">
+                        <h3 class="text-lg font-bold mb-4">Aylık Performans</h3>
+                        <div class="chart-container"><canvas ref="monthlyChart"></canvas></div>
+                    </div>
+                    <div class="glass-strong rounded-2xl p-6">
+                        <h3 class="text-lg font-bold mb-4">Kategori Dağılımı</h3>
+                        <div class="chart-container"><canvas ref="categoryChart"></canvas></div>
+                    </div>
+                </div>
+
+                <!-- SOURCE CHART + CONVERSION -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="glass-strong rounded-2xl p-6">
+                        <h3 class="text-lg font-bold mb-4">Lead Kaynakları</h3>
+                        <div class="chart-container"><canvas ref="sourceChart"></canvas></div>
+                    </div>
+                    <div class="glass-strong rounded-2xl p-6">
+                        <h3 class="text-lg font-bold mb-6">Aşama Bazlı Dönüşüm</h3>
+                        <!-- PIPELINE SELECTOR -->
+                        <div class="flex gap-2 mb-4 flex-wrap">
+                            <button v-for="cat in pipelineCategories" :key="cat.id"
+                                @click="currentPipeline = cat.id"
+                                :class="{ 'active': currentPipeline === cat.id }"
+                                class="filter-chip text-xs">
+                                {{ cat.label }}
+                            </button>
+                        </div>
+                        <div class="space-y-3">
+                            <div v-for="stage in conversionMetrics" :key="stage.name" class="space-y-1">
+                                <div class="flex items-center justify-between text-sm">
+                                    <span class="font-medium">{{ stage.name }}</span>
+                                    <span class="text-gray-400 text-xs">{{ stage.count }} kayıt · %{{ stage.rate }}</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" :style="{ width: stage.rate + '%' }"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- ═══════════════════ LEAD DETAIL PANEL ═══════════════════ -->
+        <transition name="v">
+            <div v-if="showLeadPanel" class="fixed inset-0 z-50" @click.self="closeLeadPanel">
+                <div class="lead-panel glass-strong slide-in-right panel-scroll">
+                    <div v-if="activeLead">
+                        <!-- PANEL HEADER -->
+                        <div class="sticky top-0 glass-strong p-5 border-b border-white/10 z-10">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="flex items-center gap-3">
+                                    <div :class="['source-icon', 'source-' + (activeLead.source || 'manual')]" style="width:40px;height:40px;font-size:16px;border-radius:10px;">
+                                        <i :class="getSourceIcon(activeLead.source)"></i>
+                                    </div>
+                                    <div>
+                                        <h2 class="text-xl font-bold">{{ activeLead.name }}</h2>
+                                        <p class="text-sm text-gray-400">{{ activeLead.phone }}</p>
+                                    </div>
+                                </div>
+                                <button @click="closeLeadPanel" class="p-2 rounded-xl hover:bg-white/10 flex-shrink-0">
+                                    <i class="fas fa-times text-lg"></i>
+                                </button>
+                            </div>
+                            <!-- QUICK INFO -->
+                            <div class="flex flex-wrap gap-2 mt-3">
+                                <span :class="getStageBadgeClass(activeLead.stage)" class="badge">{{ activeLead.stage }}</span>
+                                <span class="badge badge-info">{{ getCategoryLabel(activeLead.category) }}</span>
+                                <span :class="'badge badge-' + (activeLead.source || 'manual')">
+                                    <i :class="[getSourceIcon(activeLead.source), 'mr-1']"></i>{{ getSourceLabel(activeLead.source) }}
+                                </span>
+                                <span v-if="activeLead.price" class="badge badge-primary">{{ formatCurrency(activeLead.price) }}</span>
+                            </div>
+                        </div>
+
+                        <!-- PANEL BODY -->
+                        <div class="p-5 space-y-6">
+                            <!-- STAGE CHANGE -->
+                            <div class="glass rounded-xl p-4">
+                                <p class="text-xs text-gray-400 mb-2 font-medium uppercase tracking-wide">Aşama Değiştir</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <button v-for="stage in getCurrentCategoryStages(activeLead.category)" :key="stage.id"
+                                        @click="updateLeadStage(stage.id)"
+                                        :class="activeLead.stage === stage.id ? 'border-indigo-500 bg-indigo-500/20 text-indigo-300' : 'border-white/10 text-gray-400 hover:border-white/30'"
+                                        class="px-3 py-1 rounded-xl text-xs font-medium border transition-all">
+                                        {{ stage.name }}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- ═══ OTOMATIK TAKİP PLANI ═══ -->
+                            <div class="followup-card">
+                                <div class="flex items-center justify-between mb-3">
+                                    <p class="text-xs font-bold uppercase tracking-wide flex items-center gap-2" style="color:#38bdf8;">
+                                        <i class="fas fa-robot"></i>Otomatik Takip Planı
+                                    </p>
+                                    <div v-if="activeFollowup" class="flex items-center gap-1.5">
+                                        <span class="pulse-dot w-2 h-2 rounded-full inline-block" style="background:#22c55e;"></span>
+                                        <span class="text-xs text-green-400 font-medium">Aktif</span>
+                                    </div>
+                                </div>
+
+                                <!-- Plan yok → Oluştur -->
+                                <div v-if="!activeFollowup && !showFollowupForm">
+                                    <p class="text-xs text-gray-500 mb-3">
+                                        1., 2. ve 3. haftada Telegram'a otomatik bildirim + notlar gönderin.
+                                    </p>
+                                    <button @click="showFollowupForm = true" class="btn btn-secondary w-full justify-center text-sm"
+                                            style="border-color:rgba(14,165,233,0.4);color:#38bdf8;">
+                                        <i class="fas fa-play-circle mr-2"></i>3 Haftalık Takip Planı Başlat
+                                    </button>
+                                </div>
+
+                                <!-- Yeni plan formu -->
+                                <div v-if="showFollowupForm && !activeFollowup" class="space-y-2">
+                                    <div v-for="(wk, idx) in ['week1','week2','week3']" :key="wk" class="followup-week pending">
+                                        <p class="text-xs font-semibold mb-1" style="color:#fbbf24;">
+                                            <i class="fas fa-calendar-week mr-1"></i>{{ idx+1 }}. Hafta Notu
+                                        </p>
+                                        <input v-model="followupNotes[wk]" type="text"
+                                               :placeholder="['1. hafta takip görüşmesi','2. hafta durum değerlendirmesi','3. hafta kapanış fırsatı'][idx]"
+                                               class="text-xs py-1.5">
+                                    </div>
+                                    <div class="flex gap-2 mt-3">
+                                        <button @click="startFollowupPlan" :disabled="followupStarting"
+                                                class="btn btn-primary flex-1 justify-center text-sm">
+                                            <i class="fas" :class="followupStarting ? 'fa-spinner fa-spin' : 'fa-rocket'"></i>
+                                            {{ followupStarting ? 'Başlatılıyor...' : 'Planı Başlat' }}
+                                        </button>
+                                        <button @click="showFollowupForm = false" class="btn btn-secondary text-sm">İptal</button>
+                                    </div>
+                                </div>
+
+                                <!-- Aktif plan görünümü -->
+                                <div v-if="activeFollowup" class="space-y-2">
+                                    <div v-for="(wk, idx) in ['week1','week2','week3']" :key="wk"
+                                         :class="['followup-week', activeFollowup.sent[wk] ? 'sent' : 'pending']">
+                                        <div class="flex items-start gap-2">
+                                            <div class="flex-shrink-0 mt-0.5">
+                                                <i v-if="activeFollowup.sent[wk]"
+                                                   class="fas fa-check-circle text-green-400 text-sm"></i>
+                                                <i v-else class="fas fa-clock text-yellow-400 text-sm"></i>
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="flex items-center gap-2 mb-1">
+                                                    <span class="text-xs font-semibold" :style="activeFollowup.sent[wk] ? 'color:#4ade80' : 'color:#fbbf24'">
+                                                        {{ idx+1 }}. Hafta
+                                                    </span>
+                                                    <span class="text-xs text-gray-500">
+                                                        {{ formatDateShort(activeFollowup[wk+'Date']) }}
+                                                    </span>
+                                                    <span v-if="activeFollowup.sent[wk]"
+                                                          class="badge badge-success text-xs" style="padding:1px 6px;font-size:0.6rem;">
+                                                        ✓ Gönderildi
+                                                    </span>
+                                                </div>
+                                                <div v-if="!editingFollowupWeek || editingFollowupWeek !== wk">
+                                                    <p class="text-xs text-gray-300 truncate">{{ activeFollowup.notes[wk] }}</p>
+                                                    <button v-if="!activeFollowup.sent[wk]"
+                                                            @click="startEditFollowupWeek(wk)"
+                                                            class="text-xs text-indigo-400 hover:text-indigo-300 mt-1">
+                                                        <i class="fas fa-pen mr-1"></i>Notu düzenle
+                                                    </button>
+                                                </div>
+                                                <div v-else class="flex gap-1 mt-1">
+                                                    <input v-model="editingFollowupNote" type="text" class="text-xs py-1 flex-1">
+                                                    <button @click="saveFollowupNote(wk)" class="text-green-400 hover:text-green-300 px-2">
+                                                        <i class="fas fa-check text-xs"></i>
+                                                    </button>
+                                                    <button @click="editingFollowupWeek = null" class="text-gray-500 hover:text-gray-300 px-2">
+                                                        <i class="fas fa-times text-xs"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex gap-2 mt-3 pt-2 border-t border-white/10">
+                                        <button @click="sendFollowupNow" class="btn text-xs py-1.5 px-3"
+                                                style="background:rgba(14,165,233,0.15);color:#38bdf8;border:1px solid rgba(14,165,233,0.3)">
+                                            <i class="fab fa-telegram mr-1"></i>Şimdi Bildir
+                                        </button>
+                                        <button @click="cancelFollowupPlan"
+                                                class="btn btn-danger text-xs py-1.5 px-3">
+                                            <i class="fas fa-stop-circle mr-1"></i>Planı İptal Et
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ADD REMINDER -->
+                            <div class="glass rounded-xl p-4">
+                                <p class="text-xs text-gray-400 mb-3 font-medium uppercase tracking-wide flex items-center gap-2">
+                                    <i class="fas fa-bell text-yellow-400"></i>Hatırlatma Ekle
+                                </p>
+
+                                <!-- HIZLI BUTONLAR -->
+                                <div class="flex flex-wrap gap-2 mb-3">
+                                    <button @click="quickReminder('1 Hafta Sonra Ara', 7)"
+                                        class="text-xs px-3 py-1.5 rounded-lg font-medium transition-all"
+                                        style="background:rgba(245,158,11,0.15);color:#fbbf24;border:1px solid rgba(245,158,11,0.3)">
+                                        <i class="fas fa-phone mr-1"></i>1 Hafta
+                                    </button>
+                                    <button @click="quickReminder('2 Hafta Sonra Ara', 14)"
+                                        class="text-xs px-3 py-1.5 rounded-lg font-medium transition-all"
+                                        style="background:rgba(245,158,11,0.15);color:#fbbf24;border:1px solid rgba(245,158,11,0.3)">
+                                        <i class="fas fa-phone mr-1"></i>2 Hafta
+                                    </button>
+                                    <button @click="quickReminder('1 Ay Sonra Ara', 30)"
+                                        class="text-xs px-3 py-1.5 rounded-lg font-medium transition-all"
+                                        style="background:rgba(245,158,11,0.15);color:#fbbf24;border:1px solid rgba(245,158,11,0.3)">
+                                        <i class="fas fa-phone mr-1"></i>1 Ay
+                                    </button>
+                                    <button @click="quickReminder('Tekrar İletişime Geç', 3)"
+                                        class="text-xs px-3 py-1.5 rounded-lg font-medium transition-all"
+                                        style="background:rgba(99,102,241,0.15);color:#a5b4fc;border:1px solid rgba(99,102,241,0.3)">
+                                        <i class="fas fa-redo mr-1"></i>3 Gün
+                                    </button>
+                                    <button @click="sendTelegramNow()"
+                                        class="text-xs px-3 py-1.5 rounded-lg font-medium transition-all"
+                                        style="background:rgba(14,165,233,0.15);color:#38bdf8;border:1px solid rgba(14,165,233,0.3)">
+                                        <i class="fab fa-telegram mr-1"></i>Şimdi Bildir
+                                    </button>
+                                </div>
+
+                                <div class="space-y-2">
+                                    <input v-model="newReminderText" type="text" placeholder="Hatırlatma notu..." class="text-sm" @keydown.enter="addReminderForLead">
+                                    <div class="flex gap-2">
+                                        <input v-model="newReminderDate" type="datetime-local" class="flex-1 text-sm">
+                                        <button @click="addReminderForLead" :disabled="!newReminderText || !newReminderDate" class="btn btn-primary py-2 px-4 text-sm">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <!-- ACTIVE REMINDERS FOR THIS LEAD -->
+                                <div v-if="activeLeadReminders.length > 0" class="mt-3 space-y-2">
+                                    <div v-for="r in activeLeadReminders" :key="r.id"
+                                         :class="['reminder-card', isOverdue(r.dueDate) ? 'overdue' : '', r.done ? 'done' : '']"
+                                         style="padding: 0.6rem 0.75rem;">
+                                        <div class="flex items-center justify-between gap-2">
+                                            <div class="flex-1 min-w-0">
+                                                <p class="text-xs text-gray-300 truncate">{{ r.text }}</p>
+                                                <p :class="['text-xs', isOverdue(r.dueDate) ? 'text-red-400' : 'text-yellow-400']">{{ formatReminderDate(r.dueDate) }}</p>
+                                            </div>
+                                            <div class="flex gap-1">
+                                                <button v-if="!r.done" @click="doneReminder(r.id)" class="text-green-400 hover:text-green-300 text-xs px-2 py-1"><i class="fas fa-check"></i></button>
+                                                <button @click="deleteReminderFn(r.id)" class="text-red-400 hover:text-red-300 text-xs px-2 py-1"><i class="fas fa-trash"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ADD COMMENT -->
+                            <div class="glass rounded-xl p-4">
+                                <p class="text-xs text-gray-400 mb-3 font-medium uppercase tracking-wide flex items-center gap-2">
+                                    <i class="fas fa-comments text-green-400"></i>Yorum / Not Ekle
+                                </p>
+                                <div class="flex gap-2">
+                                    <textarea v-model="newCommentText" rows="2" placeholder="Yorum veya not yazın..." class="flex-1 text-sm" style="min-height:60px;" @keydown.ctrl.enter="addComment"></textarea>
+                                    <button @click="addComment" :disabled="!newCommentText.trim()" class="btn btn-primary px-4 self-end text-sm">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                </div>
+                                <p class="text-xs text-gray-600 mt-1">Ctrl+Enter ile gönder</p>
+                            </div>
+
+                            <!-- TIMELINE -->
+                            <div>
+                                <p class="text-xs text-gray-400 mb-4 font-medium uppercase tracking-wide flex items-center gap-2">
+                                    <i class="fas fa-history text-blue-400"></i>Geçmiş
+                                </p>
+                                <div v-if="activeLeadTimeline.length === 0" class="text-center py-6 text-gray-600 text-sm">
+                                    <i class="fas fa-clipboard-list text-2xl mb-2 block opacity-20"></i>
+                                    Henüz aktivite yok
+                                </div>
+                                <div class="timeline">
+                                    <div v-for="item in activeLeadTimeline" :key="item.id" class="timeline-item">
+                                        <div :class="['timeline-dot', item.type]"></div>
+                                        <div class="comment-box" v-if="item.type === 'comment'">
+                                            <div class="flex items-start justify-between gap-2">
+                                                <p class="text-sm text-gray-200 flex-1">{{ item.text }}</p>
+                                                <button @click="deleteComment(item.id)" class="text-gray-600 hover:text-red-400 text-xs flex-shrink-0"><i class="fas fa-times"></i></button>
+                                            </div>
+                                            <p class="text-xs text-gray-500 mt-1">{{ formatDate(item.createdAt) }}</p>
+                                        </div>
+                                        <div class="glass rounded-lg p-3" v-else-if="item.type === 'stage'">
+                                            <p class="text-sm font-medium">Aşama değişti → <span class="text-indigo-300">{{ item.text }}</span></p>
+                                            <p class="text-xs text-gray-500 mt-0.5">{{ formatDate(item.createdAt) }}</p>
+                                        </div>
+                                        <div class="glass rounded-lg p-3" v-else>
+                                            <p class="text-sm text-gray-300">{{ item.text }}</p>
+                                            <p class="text-xs text-gray-500 mt-0.5">{{ formatDate(item.createdAt) }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- EDIT BUTTON -->
+                            <button @click="openContactDetail(activeLead); closeLeadPanel()" class="btn btn-secondary w-full justify-center">
+                                <i class="fas fa-edit mr-2"></i>Tam Düzenleme Formunu Aç
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+        <!-- ═══════════════════ CONTACT DETAIL MODAL ═══════════════════ -->
+        <transition>
+            <div v-if="showContactModal" class="modal-backdrop" @click="closeContactModal">
+                <div class="modal-content glass-strong rounded-2xl p-6" @click.stop>
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-bold">
+                            {{ editingContact.id ? 'Düzenle' : 'Yeni Kayıt' }}
+                        </h2>
+                        <button @click="closeContactModal" class="p-2 rounded-xl hover:bg-white/5">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    <form @submit.prevent="saveContact" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Ad Soyad *</label>
+                            <input v-model="editingContact.name" type="text" required>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Telefon</label>
+                                <input v-model="editingContact.phone" type="tel">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Kaynak</label>
+                                <select v-model="editingContact.source">
+                                    <option value="manual">Manuel</option>
+                                    <option value="website">Web Sitesi</option>
+                                    <option value="meta">Meta Ads</option>
+                                    <option value="whatsapp">WhatsApp</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Kategori</label>
+                                <select v-model="editingContact.category">
+                                    <option value="fsbo">FSBO</option>
+                                    <option value="project">PROJE</option>
+                                    <option value="client">MÜŞTERİ</option>
+                                    <option value="portfolio">PORTFÖY</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Aşama</label>
+                                <select v-model="editingContact.stage">
+                                    <option v-for="stage in getCurrentCategoryStages(editingContact.category)" :key="stage.id" :value="stage.id">
+                                        {{ stage.name }}
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Değer (₺)</label>
+                                <input v-model.number="editingContact.price" type="number" step="1000">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">İlçe</label>
+                                <input v-model="editingContact.district" type="text">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Randevu Tarihi</label>
+                            <input v-model="editingContact.appointmentDate" type="datetime-local">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Notlar</label>
+                            <textarea v-model="editingContact.notes" rows="3"></textarea>
+                        </div>
+                        <div class="flex gap-3 pt-2">
+                            <button type="submit" class="btn btn-primary flex-1 justify-center" :disabled="saving">
+                                <i class="fas" :class="saving ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+                                {{ saving ? 'Kaydediliyor...' : 'Kaydet' }}
+                            </button>
+                            <button v-if="editingContact.id" type="button" @click="deleteContact" class="btn btn-danger">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </transition>
+
+        <!-- ═══════════════════ IMPORT MODAL ═══════════════════ -->
+        <transition>
+            <div v-if="showImportModal" class="modal-backdrop" @click="closeImportModal">
+                <div class="modal-content glass-strong rounded-2xl p-6" @click.stop style="max-width:700px;width:95%">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-bold"><i class="fas fa-file-excel mr-2 text-green-400"></i>Excel'den Toplu İçe Aktar</h3>
+                        <button @click="closeImportModal" class="p-2 rounded-xl hover:bg-white/5"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div v-if="!importPreview.length"
+                        class="border-2 border-dashed border-indigo-500/40 rounded-2xl p-10 text-center hover:border-indigo-500 transition-all cursor-pointer relative"
+                        @dragover.prevent="importDragOver = true"
+                        @dragleave="importDragOver = false"
+                        @drop.prevent="handleImportDrop"
+                        :class="{'border-indigo-500 bg-indigo-500/10': importDragOver}"
+                        @click="$refs.xlsxInput.click()">
+                        <input ref="xlsxInput" type="file" accept=".xlsx,.xls,.csv" class="hidden" @change="handleImportFile">
+                        <i class="fas fa-cloud-upload-alt text-4xl text-indigo-400 mb-4"></i>
+                        <p class="text-gray-300 font-semibold mb-1">Dosyayı sürükle bırak ya da tıkla</p>
+                        <p class="text-gray-500 text-sm">Excel (.xlsx, .xls) veya CSV dosyası</p>
+                        <div class="mt-6 p-4 rounded-xl bg-white/5 text-left text-sm text-gray-400">
+                            <p class="font-semibold text-gray-300 mb-2"><i class="fas fa-info-circle mr-1 text-blue-400"></i>Beklenen Kolon Formatı:</p>
+                            <p><span class="text-indigo-400">İSİM</span>, <span class="text-indigo-400">SOYİSİM</span>, <span class="text-indigo-400">TEL</span>, <span class="text-indigo-400">GELDİĞİ PROJE</span>, <span class="text-indigo-400">SONUÇ</span></p>
+                        </div>
+                    </div>
+                    <div v-if="importPreview.length">
+                        <div class="flex items-center justify-between mb-3">
+                            <div>
+                                <span class="font-semibold text-green-400"><i class="fas fa-check-circle mr-1"></i>{{ importPreview.length }} kayıt hazır</span>
+                                <span v-if="importSkipped > 0" class="ml-3 text-yellow-400 text-sm"><i class="fas fa-exclamation-triangle mr-1"></i>{{ importSkipped }} satır atlandı</span>
+                            </div>
+                            <button @click="importPreview = []; importSkipped = 0" class="text-sm text-gray-400 hover:text-white"><i class="fas fa-redo mr-1"></i>Yeniden Seç</button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 mb-4">
+                            <div>
+                                <label class="block text-xs text-gray-400 mb-1">Kategori</label>
+                                <select v-model="importCategory">
+                                    <option v-for="cat in pipelineCategories" :key="cat.id" :value="cat.id">{{ cat.label }}</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-400 mb-1">Başlangıç Aşaması</label>
+                                <select v-model="importStage">
+                                    <option v-for="s in getCurrentCategoryStages(importCategory)" :key="s.id" :value="s.id">{{ s.name }}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto rounded-xl border border-white/10 mb-4" style="max-height:280px;overflow-y:auto">
+                            <table class="w-full text-sm">
+                                <thead class="bg-white/5 sticky top-0">
+                                    <tr>
+                                        <th class="text-left p-2 px-3 text-gray-400">#</th>
+                                        <th class="text-left p-2 px-3 text-gray-400">Ad Soyad</th>
+                                        <th class="text-left p-2 px-3 text-gray-400">Telefon</th>
+                                        <th class="text-left p-2 px-3 text-gray-400">Proje</th>
+                                        <th class="text-left p-2 px-3 text-gray-400">Sonuç/Not</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="(row, i) in importPreview" :key="i" class="border-t border-white/5 hover:bg-white/5">
+                                        <td class="p-2 px-3 text-gray-500">{{ i + 1 }}</td>
+                                        <td class="p-2 px-3">{{ row.name }}</td>
+                                        <td class="p-2 px-3 text-gray-400">{{ row.phone }}</td>
+                                        <td class="p-2 px-3 text-gray-400">{{ row.district }}</td>
+                                        <td class="p-2 px-3 text-gray-400">{{ row.notes }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="flex gap-3">
+                            <button @click="executeImport" class="btn btn-primary flex-1 justify-center" :disabled="importing">
+                                <i class="fas" :class="importing ? 'fa-spinner fa-spin' : 'fa-cloud-upload-alt'"></i>
+                                {{ importing ? `İçe Aktarılıyor... (${importProgress}/${importPreview.length})` : `${importPreview.length} Kaydı İçe Aktar` }}
+                            </button>
+                            <button @click="closeImportModal" class="btn btn-secondary">İptal</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+        <!-- TOAST -->
+        <transition>
+            <div v-if="toast.show" class="fixed top-4 right-4 glass-strong rounded-xl px-6 py-4 shadow-2xl z-[9999] flex items-center gap-3">
+                <i :class="toast.icon" class="text-xl"></i>
+                <span class="font-medium">{{ toast.message }}</span>
+            </div>
+        </transition>
+    </div>
+</div>
+
+<script>
+    const { createApp, ref, computed, onMounted, watch, nextTick } = Vue;
+
+    // ── FIREBASE CONFIG ──────────────────────────────────────────
+    const firebaseConfig = {
+        apiKey: "AIzaSyAr_0sA60geSooDE1C4LSjFsxqofysIW8o",
+        authDomain: "nexacrm-44a49.firebaseapp.com",
+        projectId: "nexacrm-44a49",
+        storageBucket: "nexacrm-44a49.firebasestorage.app",
+        messagingSenderId: "382109341750",
+        appId: "1:382109341750:web:76a5f6b50b2331b85c6097",
+        measurementId: "G-N0SJXXC4J7"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // ── CHART INSTANCES (fix: destroy before re-create) ──────────
+    const chartInstances = {};
+
+    createApp({
+        setup() {
+            // ── STATE ────────────────────────────────────────────
+            const user = ref(null);
+            const uiLoading = ref(true);
+            const authMode = ref('signin');
+            const authLoading = ref(false);
+            const authError = ref('');
+            const email = ref('');
+            const password = ref('');
+            const displayName = ref('');
+
+            const activeView = ref('dashboard');
+            const currentPipeline = ref('fsbo');
+            const contacts = ref([]);
+            const searchQuery = ref('');
+            const showMenu = ref(false);
+            const showContactModal = ref(false);
+            const editingContact = ref({});
+            const saving = ref(false);
+            const toast = ref({ show: false, message: '', icon: '' });
+            const draggedContact = ref(null);
+
+            // LEADS
+            const leadTab = ref('list');
+            const leadSearch = ref('');
+            const leadSourceFilter = ref('');
+            const webLeads = ref([]);         // /leads koleksiyonundan gelenler (web formu)
+            const newWebLeadCount = ref(0);   // bildirim sayacı
+            let webLeadsUnsub = null;
+            const showLeadPanel = ref(false);
+            const activeLeadId = ref(null);
+            const newCommentText = ref('');
+            const newReminderText = ref('');
+            const newReminderDate = ref('');
+
+            // REMINDERS
+            const reminders = ref([]);
+
+            // IMPORT
+            const showImportModal = ref(false);
+            const importPreview = ref([]);
+            const importSkipped = ref(0);
+            const importDragOver = ref(false);
+            const importCategory = ref('client');
+            const importStage = ref('new');
+            const importing = ref(false);
+            const importProgress = ref(0);
+
+            // ── FOLLOWUP STATE ────────────────────────────────────
+            const followups           = ref([]);   // Tüm aktif takip planları
+            const showFollowupForm    = ref(false);
+            const followupStarting    = ref(false);
+            const editingFollowupWeek = ref(null);
+            const editingFollowupNote = ref('');
+            const followupNotes       = ref({ week1: '', week2: '', week3: '' });
+
+            // CHART REFS
+            const funnelChart = ref(null);
+            const pipelineChart = ref(null);
+            const monthlyChart = ref(null);
+            const categoryChart = ref(null);
+            const sourceChart = ref(null);
+
+            // ── PIPELINE CATEGORIES & STAGES ────────────────────
+            const pipelineCategories = [
+                { id: 'fsbo', label: 'FSBO', icon: 'fas fa-home' },
+                { id: 'project', label: 'PROJE', icon: 'fas fa-building' },
+                { id: 'client', label: 'MÜŞTERİ', icon: 'fas fa-user' },
+                { id: 'portfolio', label: 'PORTFÖY', icon: 'fas fa-briefcase' }
+            ];
+
+            const stagesByCategory = {
+                fsbo: [
+                    { id: 'contact', name: 'İlk Temas', color: '#3b82f6' },
+                    { id: 'valuation', name: 'Değerleme', color: '#8b5cf6' },
+                    { id: 'contract', name: 'Sözleşme', color: '#ec4899' },
+                    { id: 'listed', name: 'İlanda', color: '#f59e0b' },
+                    { id: 'showing', name: 'Görüntüleme', color: '#10b981' },
+                    { id: 'offer', name: 'Teklif', color: '#06b6d4' },
+                    { id: 'closed', name: 'Satıldı', color: '#22c55e' }
+                ],
+                project: [
+                    { id: 'lead', name: 'Potansiyel', color: '#3b82f6' },
+                    { id: 'interested', name: 'İlgilendi', color: '#8b5cf6' },
+                    { id: 'tour', name: 'Proje Gezisi', color: '#ec4899' },
+                    { id: 'proposal', name: 'Teklif Sunuldu', color: '#f59e0b' },
+                    { id: 'reservation', name: 'Rezervasyon', color: '#06b6d4' },
+                    { id: 'deposit', name: 'Ön Ödeme', color: '#10b981' },
+                    { id: 'contract', name: 'Sözleşme', color: '#8b5cf6' },
+                    { id: 'closed', name: 'Teslim', color: '#22c55e' }
+                ],
+                client: [
+                    { id: 'new', name: 'Yeni', color: '#3b82f6' },
+                    { id: 'contacted', name: 'Arandı', color: '#8b5cf6' },
+                    { id: 'meeting', name: 'Görüşme', color: '#ec4899' },
+                    { id: 'proposal', name: 'Teklif', color: '#f59e0b' },
+                    { id: 'negotiation', name: 'Müzakere', color: '#06b6d4' },
+                    { id: 'closed', name: 'Anlaşıldı', color: '#22c55e' }
+                ],
+                portfolio: [
+                    { id: 'active', name: 'Aktif', color: '#22c55e' },
+                    { id: 'rented', name: 'Kirada', color: '#3b82f6' },
+                    { id: 'maintenance', name: 'Bakımda', color: '#f59e0b' },
+                    { id: 'forsale', name: 'Satışta', color: '#8b5cf6' }
+                ]
+            };
+
+            const currentStages = computed(() => stagesByCategory[currentPipeline.value] || []);
+
+            // ── COMPUTED ─────────────────────────────────────────
+            const dashboardStats = computed(() => {
+                const now = new Date();
+                const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                const closed = contacts.value.filter(c => c.stage === 'closed').length;
+                const revenue = contacts.value.filter(c => c.stage === 'closed' && c.price).reduce((s, c) => s + c.price, 0);
+                const closedWithDates = contacts.value.filter(c => c.stage === 'closed' && c.createdAt && c.updatedAt);
+                const avgDays = closedWithDates.length > 0
+                    ? Math.round(closedWithDates.reduce((s, c) => s + Math.ceil((new Date(c.updatedAt) - new Date(c.createdAt)) / 86400000), 0) / closedWithDates.length)
+                    : 0;
+                return {
+                    total: contacts.value.length,
+                    thisWeek: contacts.value.filter(c => new Date(c.createdAt) > weekAgo).length,
+                    closed, revenue,
+                    avgDeal: closed > 0 ? Math.round(revenue / closed) : 0,
+                    avgDays
+                };
+            });
+
+            const conversionRate = computed(() => {
+                const total = contacts.value.length;
+                const closed = contacts.value.filter(c => c.stage === 'closed').length;
+                return total > 0 ? Math.round((closed / total) * 100) : 0;
+            });
+
+            const filteredContacts = computed(() => {
+                let list = contacts.value;
+                if (searchQuery.value) {
+                    const q = searchQuery.value.toLowerCase();
+                    list = list.filter(c => c.name?.toLowerCase().includes(q) || c.phone?.includes(q) || c.district?.toLowerCase().includes(q));
+                }
+                return list;
+            });
+
+            const filteredLeads = computed(() => {
+                // Kendi contacts + web formdan gelen leads birleştir
+                const webItems = webLeads.value.map(l => ({
+                    ...l,
+                    _fromWeb: true,
+                    // CRM alan uyumu
+                    stage:    l.status || 'lead',
+                    category: l.category || 'fsbo',
+                    source:   l.source  || 'website',
+                    notes:    l.notes   || l.message || '',
+                }));
+                let list = [...contacts.value, ...webItems];
+
+                if (leadSearch.value) {
+                    const q = leadSearch.value.toLowerCase();
+                    list = list.filter(c => c.name?.toLowerCase().includes(q) || c.phone?.includes(q));
+                }
+                if (leadSourceFilter.value) {
+                    if (leadSourceFilter.value === 'manual') {
+                        list = list.filter(c => !c.source || c.source === 'manual');
+                    } else if (leadSourceFilter.value === 'website') {
+                        list = list.filter(c => c.source === 'website' || c.source === 'Web Sitesi' || c._fromWeb);
+                    } else {
+                        list = list.filter(c => c.source === leadSourceFilter.value);
+                    }
+                }
+                return list.sort((a, b) => {
+                    const aTime = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
+                    const bTime = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
+                    return bTime - aTime;
+                });
+            });
+
+            const recentActivities = computed(() => {
+                return contacts.value
+                    .sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt))
+                    .slice(0, 10)
+                    .map(c => ({
+                        id: c.id,
+                        title: c.name,
+                        description: `${getCategoryLabel(c.category)} - ${c.stage}`,
+                        date: c.updatedAt || c.createdAt,
+                        stage: c.stage
+                    }));
+            });
+
+            const conversionMetrics = computed(() => {
+                const stages = currentStages.value;
+                const categoryContacts = contacts.value.filter(c => c.category === currentPipeline.value);
+                const total = categoryContacts.length;
+                return stages.map(stage => ({
+                    name: stage.name,
+                    count: categoryContacts.filter(c => c.stage === stage.id).length,
+                    rate: total > 0 ? Math.round((categoryContacts.filter(c => c.stage === stage.id).length / total) * 100) : 0
+                }));
+            });
+
+            // LEAD PANEL
+            const activeLead = computed(() => {
+                return contacts.value.find(c => c.id === activeLeadId.value)
+                    || webLeads.value.find(c => c.id === activeLeadId.value) && {
+                        ...webLeads.value.find(c => c.id === activeLeadId.value),
+                        _fromWeb: true,
+                        stage: webLeads.value.find(c => c.id === activeLeadId.value)?.status || 'lead',
+                        notes: webLeads.value.find(c => c.id === activeLeadId.value)?.notes
+                            || webLeads.value.find(c => c.id === activeLeadId.value)?.message || '',
+                    } || null;
+            });
+
+            const activeLeadTimeline = computed(() => {
+                if (!activeLead.value) return [];
+                const items = [...(activeLead.value.comments || [])];
+                return items.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            });
+
+            const activeLeadReminders = computed(() => {
+                if (!activeLeadId.value) return [];
+                return reminders.value.filter(r => r.contactId === activeLeadId.value)
+                    .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+            });
+
+            // Aktif lead için takip planı
+            const activeFollowup = computed(() => {
+                if (!activeLeadId.value) return null;
+                return followups.value.find(f => f.contactId === activeLeadId.value && !f.done) || null;
+            });
+
+            // REMINDERS
+            const allActiveReminders = computed(() => reminders.value.filter(r => !r.done).sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate)));
+            const doneReminders = computed(() => reminders.value.filter(r => r.done).sort((a, b) => new Date(b.dueDate) - new Date(a.dueDate)));
+            const overdueReminders = computed(() => allActiveReminders.value.filter(r => isOverdue(r.dueDate)));
+            const todayReminders = computed(() => {
+                const now = new Date();
+                return allActiveReminders.value.filter(r => {
+                    const d = new Date(r.dueDate);
+                    return d.toDateString() === now.toDateString() && !isOverdue(r.dueDate);
+                });
+            });
+            const upcomingReminders = computed(() => allActiveReminders.value.filter(r => !isOverdue(r.dueDate)).slice(0, 8));
+            const pendingRemindersCount = computed(() => overdueReminders.value.length + todayReminders.value.length);
+
+            // ── HELPER FUNCTIONS ─────────────────────────────────
+            const getSourceIcon = (source) => {
+                const icons = { website: 'fas fa-globe', meta: 'fab fa-facebook-f', whatsapp: 'fab fa-whatsapp', manual: 'fas fa-pencil-alt' };
+                return icons[source] || 'fas fa-pencil-alt';
+            };
+
+            const getSourceLabel = (source) => {
+                const labels = {
+                    website: 'Web Sitesi', 'Web Sitesi': 'Web Sitesi',
+                    meta: 'Meta', facebook: 'Facebook', Facebook: 'Facebook',
+                    whatsapp: 'WhatsApp', WhatsApp: 'WhatsApp',
+                    telegram: 'Telegram', Telegram: 'Telegram',
+                    google: 'Google', Google: 'Google',
+                    manual: 'Manuel'
+                };
+                return labels[source] || 'Manuel';
+            };
+
+            const contactsBySource = (source) => contacts.value.filter(c => c.source === source).length;
+
+            const getContactReminderCount = (contactId) => reminders.value.filter(r => r.contactId === contactId && !r.done).length;
+
+            const isOverdue = (dueDate) => {
+                if (!dueDate) return false;
+                return new Date(dueDate) < new Date();
+            };
+
+            const formatReminderDate = (dueDate) => {
+                if (!dueDate) return '';
+                const d = new Date(dueDate);
+                const now = new Date();
+                const diffMs = d - now;
+                const diffH = Math.round(diffMs / 3600000);
+                if (isOverdue(dueDate)) {
+                    const ago = Math.abs(diffH);
+                    if (ago < 24) return `${ago} saat gecikmiş`;
+                    return `${Math.round(ago / 24)} gün gecikmiş`;
+                }
+                if (diffH < 24) return `${diffH} saat sonra`;
+                if (diffH < 48) return 'Yarın ' + d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+                return d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+            };
+
+            const getCategoryLabel = (catId) => pipelineCategories.find(c => c.id === catId)?.label || catId;
+            const getCurrentCategoryStages = (catId) => stagesByCategory[catId] || [];
+            const getStageBadgeClass = (stage) => {
+                if (stage === 'closed' || stage === 'active') return 'badge-success';
+                if (stage === 'lead' || stage === 'new') return 'badge-primary';
+                if (stage === 'offer' || stage === 'proposal') return 'badge-warning';
+                return 'badge-info';
+            };
+            const getDaysInStage = (contact) => {
+                if (!contact.updatedAt && !contact.createdAt) return 0;
+                const start = new Date(contact.stageChangedAt || contact.updatedAt || contact.createdAt);
+                return Math.ceil((new Date() - start) / 86400000);
+            };
+            const getStageContacts = (stageId) => contacts.value.filter(c => c.category === currentPipeline.value && c.stage === stageId);
+            const getStageCount = (stageId) => getStageContacts(stageId).length;
+            const formatCurrency = (value) => {
+                if (!value) return '₺0';
+                return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(value);
+            };
+            const formatDate = (dateStr) => {
+                if (!dateStr) return '-';
+                const date = new Date(dateStr);
+                const diffDays = Math.floor((new Date() - date) / 86400000);
+                if (diffDays === 0) return 'Bugün';
+                if (diffDays === 1) return 'Dün';
+                if (diffDays < 7) return `${diffDays} gün önce`;
+                return date.toLocaleDateString('tr-TR');
+            };
+
+            // ── AUTH ──────────────────────────────────────────────
+            const signIn = async () => {
+                authError.value = '';
+                authLoading.value = true;
+                try { await auth.signInWithEmailAndPassword(email.value, password.value); }
+                catch (e) { authError.value = getErrorMessage(e.code); }
+                finally { authLoading.value = false; }
+            };
+            const register = async () => {
+                authError.value = '';
+                authLoading.value = true;
+                try {
+                    const cred = await auth.createUserWithEmailAndPassword(email.value, password.value);
+                    await cred.user.updateProfile({ displayName: displayName.value });
+                } catch (e) { authError.value = getErrorMessage(e.code); }
+                finally { authLoading.value = false; }
+            };
+            const signInWithGoogle = async () => {
+                authError.value = '';
+                authLoading.value = true;
+                try { await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
+                catch (e) { authError.value = getErrorMessage(e.code); }
+                finally { authLoading.value = false; }
+            };
+            const logout = async () => {
+                showMenu.value = false;
+                await auth.signOut();
+            };
+            const getErrorMessage = (code) => {
+                const errors = {
+                    'auth/email-already-in-use': 'Bu e-posta zaten kullanımda',
+                    'auth/invalid-email': 'Geçersiz e-posta',
+                    'auth/weak-password': 'Şifre çok zayıf',
+                    'auth/user-not-found': 'Kullanıcı bulunamadı',
+                    'auth/wrong-password': 'Hatalı şifre',
+                    'auth/invalid-credential': 'Hatalı e-posta veya şifre'
+                };
+                return errors[code] || 'Bir hata oluştu';
+            };
+
+            // ── DATA ──────────────────────────────────────────────
+            const loadData = async () => {
+                try {
+                    const snapshot = await db.collection('users').doc(user.value.uid).collection('contacts').get();
+                    contacts.value = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    await loadReminders();
+                    await loadFollowups();
+                    loadWebLeads(); // Web formundan gelen leadleri gerçek zamanlı dinle
+                    await nextTick();
+                    initCharts();
+                } catch (e) {
+                    showToast('Veri yükleme hatası', 'fas fa-times-circle text-red-400');
+                }
+            };
+
+            const loadReminders = async () => {
+                try {
+                    const snapshot = await db.collection('users').doc(user.value.uid).collection('reminders').orderBy('dueDate', 'asc').get();
+                    reminders.value = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                } catch (e) {
+                    console.warn('Reminders load error:', e);
+                }
+            };
+
+            const loadFollowups = async () => {
+                try {
+                    const snapshot = await db.collection('users').doc(user.value.uid)
+                        .collection('followups').where('done', '==', false).get();
+                    followups.value = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                } catch (e) {
+                    console.warn('Followups load error:', e);
+                }
+            };
+
+            // Web formundan gelen leadleri gerçek zamanlı dinle
+            const loadWebLeads = () => {
+                if (webLeadsUnsub) webLeadsUnsub();
+                let isFirst = true;
+                webLeadsUnsub = db.collection('leads')
+                    .orderBy('createdAt', 'desc')
+                    .limit(200)
+                    .onSnapshot(snapshot => {
+                        if (!isFirst) {
+                            snapshot.docChanges().forEach(change => {
+                                if (change.type === 'added' && !change.doc.metadata.hasPendingWrites) {
+                                    const d = change.doc.data();
+                                    newWebLeadCount.value++;
+                                    showToast(`🔔 Yeni web lead: ${d.name || 'İsimsiz'}`, 'fas fa-globe text-green-400');
+                                    // ── OTOMATİK TELEGRAM BİLDİRİMİ ──
+                                    fetch('/api/telegram/notify', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                            name:     d.name || 'İsimsiz',
+                                            phone:    d.phone || '-',
+                                            email:    d.email || '-',
+                                            source:   d.source || 'Web Sitesi',
+                                            message:  d.message || d.notes || '',
+                                            category: d.category || '',
+                                            stage:    d.status || 'Yeni',
+                                        })
+                                    }).catch(() => {});
+                                }
+                            });
+                        }
+                        isFirst = false;
+                        webLeads.value = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    }, err => {
+                        console.warn('Web leads dinleme hatası:', err.code);
+                    });
+            };
+
+            const saveContact = async () => {
+                saving.value = true;
+                try {
+                    const data = { ...editingContact.value };
+                    if (!data.createdAt) data.createdAt = new Date().toISOString();
+                    data.updatedAt = new Date().toISOString();
+                    if (!data.source) data.source = 'manual';
+                    if (data.id) {
+                        await db.collection('users').doc(user.value.uid).collection('contacts').doc(data.id).update(data);
+                        const idx = contacts.value.findIndex(c => c.id === data.id);
+                        if (idx !== -1) contacts.value[idx] = data;
+                    } else {
+                        const docRef = await db.collection('users').doc(user.value.uid).collection('contacts').add(data);
+                        contacts.value.push({ id: docRef.id, ...data });
+                    }
+                    showToast('Kaydedildi', 'fas fa-check-circle text-green-400');
+                    closeContactModal();
+                    initCharts();
+                } catch (e) {
+                    showToast('Hata: ' + e.message, 'fas fa-times-circle text-red-400');
+                } finally { saving.value = false; }
+            };
+
+            const deleteContact = async () => {
+                if (!confirm('Silmek istediğinize emin misiniz?')) return;
+                try {
+                    await db.collection('users').doc(user.value.uid).collection('contacts').doc(editingContact.value.id).delete();
+                    contacts.value = contacts.value.filter(c => c.id !== editingContact.value.id);
+                    showToast('Silindi', 'fas fa-check-circle text-green-400');
+                    closeContactModal();
+                } catch (e) {
+                    showToast('Silme hatası', 'fas fa-times-circle text-red-400');
+                }
+            };
+
+            // ── LEAD PANEL ────────────────────────────────────────
+            const openLeadPanel = (contact) => {
+                activeLeadId.value = contact.id;
+                showLeadPanel.value = true;
+                newCommentText.value = '';
+                newReminderText.value = '';
+                newReminderDate.value = '';
+                showFollowupForm.value = false;
+                editingFollowupWeek.value = null;
+                followupNotes.value = { week1: '', week2: '', week3: '' };
+            };
+
+            const openLeadPanelById = (contactId) => {
+                const contact = contacts.value.find(c => c.id === contactId);
+                if (contact) openLeadPanel(contact);
+            };
+
+            const closeLeadPanel = () => {
+                showLeadPanel.value = false;
+                activeLeadId.value = null;
+            };
+
+            const updateLeadStage = async (newStage) => {
+                if (!activeLead.value || activeLead.value.stage === newStage) return;
+                try {
+                    const now = new Date().toISOString();
+                    const stageLog = { id: Date.now().toString(), type: 'stage', text: newStage, createdAt: now };
+
+                    if (activeLead.value._fromWeb) {
+                        // Web lead → /leads/{id} koleksiyonunu güncelle
+                        await db.collection('leads').doc(activeLead.value.id).update({
+                            status: newStage,
+                            updatedAt: now
+                        });
+                        const idx = webLeads.value.findIndex(c => c.id === activeLead.value.id);
+                        if (idx !== -1) webLeads.value[idx] = { ...webLeads.value[idx], status: newStage, updatedAt: now };
+                    } else {
+                        // Manuel contact → /users/{uid}/contacts/{id}
+                        const updatedComments = [...(activeLead.value.comments || []), stageLog];
+                        await db.collection('users').doc(user.value.uid).collection('contacts').doc(activeLead.value.id).update({
+                            stage: newStage, stageChangedAt: now, updatedAt: now, comments: updatedComments
+                        });
+                        const idx = contacts.value.findIndex(c => c.id === activeLead.value.id);
+                        if (idx !== -1) contacts.value[idx] = { ...contacts.value[idx], stage: newStage, stageChangedAt: now, updatedAt: now, comments: updatedComments };
+                    }
+                    showToast('Aşama güncellendi', 'fas fa-check-circle text-green-400');
+                } catch (e) {
+                    showToast('Güncelleme hatası', 'fas fa-times-circle text-red-400');
+                }
+            };
+
+            // ── COMMENTS ──────────────────────────────────────────
+            const addComment = async () => {
+                const text = newCommentText.value.trim();
+                if (!text || !activeLead.value) return;
+                try {
+                    const comment = {
+                        id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+                        type: 'comment', text,
+                        createdAt: new Date().toISOString()
+                    };
+
+                    if (activeLead.value._fromWeb) {
+                        const updatedComments = [...(activeLead.value.comments || []), comment];
+                        await db.collection('leads').doc(activeLead.value.id).update({
+                            comments: updatedComments,
+                            updatedAt: new Date().toISOString()
+                        });
+                        const idx = webLeads.value.findIndex(c => c.id === activeLead.value.id);
+                        if (idx !== -1) webLeads.value[idx] = { ...webLeads.value[idx], comments: updatedComments };
+                    } else {
+                        const updatedComments = [...(activeLead.value.comments || []), comment];
+                        await db.collection('users').doc(user.value.uid).collection('contacts').doc(activeLead.value.id).update({
+                            comments: updatedComments,
+                            updatedAt: new Date().toISOString()
+                        });
+                        const idx = contacts.value.findIndex(c => c.id === activeLead.value.id);
+                        if (idx !== -1) contacts.value[idx] = { ...contacts.value[idx], comments: updatedComments };
+                    }
+                    newCommentText.value = '';
+                    showToast('Yorum eklendi', 'fas fa-check-circle text-green-400');
+                } catch (e) {
+                    showToast('Yorum eklenemedi', 'fas fa-times-circle text-red-400');
+                }
+            };
+
+            const deleteComment = async (commentId) => {
+                if (!activeLead.value) return;
+                try {
+                    const updatedComments = (activeLead.value.comments || []).filter(c => c.id !== commentId);
+                    await db.collection('users').doc(user.value.uid).collection('contacts').doc(activeLead.value.id).update({
+                        comments: updatedComments
+                    });
+                    const idx = contacts.value.findIndex(c => c.id === activeLead.value.id);
+                    if (idx !== -1) contacts.value[idx] = { ...contacts.value[idx], comments: updatedComments };
+                } catch (e) {
+                    showToast('Silme hatası', 'fas fa-times-circle text-red-400');
+                }
+            };
+
+            // ── REMINDERS ─────────────────────────────────────────
+            const addReminderForLead = async () => {
+                if (!newReminderText.value || !newReminderDate.value || !activeLead.value) return;
+                try {
+                    const reminderData = {
+                        contactId:    activeLead.value.id,
+                        contactName:  activeLead.value.name,
+                        contactPhone: activeLead.value.phone || '',
+                        text:         newReminderText.value,
+                        dueDate:      newReminderDate.value,
+                        done:         false,
+                        telegramSent: false,
+                        createdAt:    new Date().toISOString()
+                    };
+                    const docRef = await db.collection('users').doc(user.value.uid).collection('reminders').add(reminderData);
+                    reminders.value.push({ id: docRef.id, ...reminderData });
+                    newReminderText.value = '';
+                    newReminderDate.value = '';
+                    showToast('Hatırlatma eklendi', 'fas fa-bell text-yellow-400');
+                } catch (e) {
+                    showToast('Hatırlatma eklenemedi', 'fas fa-times-circle text-red-400');
+                }
+            };
+
+            // Hızlı hatırlatma: X gün sonra
+            const quickReminder = async (text, daysLater) => {
+                if (!activeLead.value) return;
+                const due = new Date();
+                due.setDate(due.getDate() + daysLater);
+                // datetime-local formatı: YYYY-MM-DDTHH:MM
+                const dueStr = due.toISOString().slice(0, 16);
+                try {
+                    const reminderData = {
+                        contactId:    activeLead.value.id,
+                        contactName:  activeLead.value.name,
+                        contactPhone: activeLead.value.phone || '',
+                        text,
+                        dueDate:      dueStr,
+                        done:         false,
+                        telegramSent: false,
+                        createdAt:    new Date().toISOString()
+                    };
+                    const docRef = await db.collection('users').doc(user.value.uid).collection('reminders').add(reminderData);
+                    reminders.value.push({ id: docRef.id, ...reminderData });
+                    showToast(
+                        `⏰ ${text} — ${due.toLocaleDateString('tr-TR')}`,
+                        'fas fa-bell text-yellow-400'
+                    );
+                } catch (e) {
+                    showToast('Hatırlatma eklenemedi', 'fas fa-times-circle text-red-400');
+                }
+            };
+
+            // Lead için anında Telegram bildirimi gönder
+            const sendTelegramNow = async () => {
+                if (!activeLead.value) return;
+                try {
+                    await fetch('/api/telegram/notify', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name:    activeLead.value.name,
+                            phone:   activeLead.value.phone || '',
+                            email:   activeLead.value.email || '',
+                            source:  activeLead.value.source || 'CRM',
+                            message: activeLead.value.notes || activeLead.value.message || ''
+                        })
+                    });
+                    showToast('Telegram\'a gönderildi', 'fab fa-telegram text-blue-400');
+                } catch (e) {
+                    showToast('Telegram gönderilemedi', 'fas fa-times-circle text-red-400');
+                }
+            };
+
+            // ── FOLLOWUP FUNCTIONS ────────────────────────────────
+
+            const formatDateShort = (isoStr) => {
+                if (!isoStr) return '';
+                try {
+                    return new Date(isoStr).toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                } catch { return isoStr; }
+            };
+
+            const startFollowupPlan = async () => {
+                if (!activeLead.value || followupStarting.value) return;
+                followupStarting.value = true;
+                try {
+                    const body = {
+                        uid:          user.value.uid,
+                        contactId:    activeLead.value.id,
+                        contactName:  activeLead.value.name,
+                        contactPhone: activeLead.value.phone || '',
+                        contactEmail: activeLead.value.email || '',
+                        notes: {
+                            week1: followupNotes.value.week1 || '1. hafta takip görüşmesi',
+                            week2: followupNotes.value.week2 || '2. hafta durum değerlendirmesi',
+                            week3: followupNotes.value.week3 || '3. hafta kapanış fırsatı',
+                        }
+                    };
+                    const resp = await fetch('/api/followup/schedule', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(body)
+                    });
+                    const result = await resp.json();
+                    if (result.ok) {
+                        // Firestore'dan yeni planı çek
+                        await loadFollowups();
+                        showFollowupForm.value = false;
+                        followupNotes.value = { week1: '', week2: '', week3: '' };
+                        showToast('✅ Takip planı başlatıldı! Telegram\'a bildirim gönderildi.', 'fas fa-rocket text-blue-400');
+                    } else {
+                        showToast('Hata: ' + (result.error || 'Bilinmeyen hata'), 'fas fa-times-circle text-red-400');
+                    }
+                } catch (e) {
+                    showToast('Sunucuya bağlanılamadı', 'fas fa-times-circle text-red-400');
+                } finally {
+                    followupStarting.value = false;
+                }
+            };
+
+            const startEditFollowupWeek = (week) => {
+                editingFollowupWeek.value = week;
+                editingFollowupNote.value = activeFollowup.value?.notes[week] || '';
+            };
+
+            const saveFollowupNote = async (week) => {
+                if (!activeFollowup.value || !user.value) return;
+                const newNote = editingFollowupNote.value.trim();
+                if (!newNote) return;
+                try {
+                    const resp = await fetch('/api/followup/update', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            uid:        user.value.uid,
+                            followupId: activeFollowup.value.id,
+                            notes:      { [week]: newNote }
+                        })
+                    });
+                    const result = await resp.json();
+                    if (result.ok) {
+                        // Local state güncelle
+                        const idx = followups.value.findIndex(f => f.id === activeFollowup.value.id);
+                        if (idx !== -1) {
+                            followups.value[idx] = {
+                                ...followups.value[idx],
+                                notes: { ...followups.value[idx].notes, [week]: newNote }
+                            };
+                        }
+                        showToast('Not güncellendi', 'fas fa-check-circle text-green-400');
+                    }
+                } catch (e) {
+                    showToast('Not kaydedilemedi', 'fas fa-times-circle text-red-400');
+                } finally {
+                    editingFollowupWeek.value = null;
+                }
+            };
+
+            const cancelFollowupPlan = async () => {
+                if (!activeFollowup.value || !confirm('Takip planı iptal edilsin mi?')) return;
+                try {
+                    const resp = await fetch('/api/followup/cancel', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ uid: user.value.uid, followupId: activeFollowup.value.id })
+                    });
+                    const result = await resp.json();
+                    if (result.ok) {
+                        followups.value = followups.value.filter(f => f.id !== activeFollowup.value.id);
+                        showToast('Takip planı iptal edildi', 'fas fa-check-circle text-yellow-400');
+                    }
+                } catch (e) {
+                    showToast('İptal edilemedi', 'fas fa-times-circle text-red-400');
+                }
+            };
+
+            const sendFollowupNow = async () => {
+                if (!activeLead.value) return;
+                try {
+                    const f = activeFollowup.value;
+                    const sentWeeks = f ? Object.entries(f.sent).filter(([,v]) => !v).map(([k]) => k.replace('week','')) : [];
+                    const nextWeek = sentWeeks[0] || '?';
+                    await fetch('/api/telegram/notify', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name:    activeLead.value.name,
+                            phone:   activeLead.value.phone || '',
+                            email:   activeLead.value.email || '',
+                            source:  `Takip Planı (${nextWeek}. hafta hatırlatma)`,
+                            message: f ? f.notes[`week${nextWeek}`] || '' : ''
+                        })
+                    });
+                    showToast('Telegram\'a bildirim gönderildi', 'fab fa-telegram text-blue-400');
+                } catch (e) {
+                    showToast('Gönderilemedi', 'fas fa-times-circle text-red-400');
+                }
+            };
+
+            const doneReminder = async (reminderId) => {
+                try {
+                    await db.collection('users').doc(user.value.uid).collection('reminders').doc(reminderId).update({ done: true });
+                    const idx = reminders.value.findIndex(r => r.id === reminderId);
+                    if (idx !== -1) reminders.value[idx] = { ...reminders.value[idx], done: true };
+                } catch (e) {
+                    showToast('Güncelleme hatası', 'fas fa-times-circle text-red-400');
+                }
+            };
+
+            const deleteReminderFn = async (reminderId) => {
+                try {
+                    await db.collection('users').doc(user.value.uid).collection('reminders').doc(reminderId).delete();
+                    reminders.value = reminders.value.filter(r => r.id !== reminderId);
+                } catch (e) {
+                    showToast('Silme hatası', 'fas fa-times-circle text-red-400');
+                }
+            };
+
+            // ── UI FUNCTIONS ──────────────────────────────────────
+            const openContactDetail = (contact) => {
+                editingContact.value = { ...contact };
+                showContactModal.value = true;
+            };
+            const openAddContact = (stageId = null) => {
+                editingContact.value = {
+                    category: currentPipeline.value,
+                    stage: stageId || currentStages.value[0]?.id,
+                    source: 'manual',
+                    name: '', phone: '', price: null, notes: ''
+                };
+                showContactModal.value = true;
+            };
+            const closeContactModal = () => {
+                showContactModal.value = false;
+                editingContact.value = {};
+            };
+
+            // ── DRAG & DROP ───────────────────────────────────────
+            const handleDragStart = (e, contact) => {
+                draggedContact.value = contact;
+                e.target.classList.add('dragging');
+            };
+            const handleDragOver = (e) => {
+                e.preventDefault();
+                e.currentTarget.classList.add('drag-over');
+            };
+            const handleDragLeave = (e) => {
+                e.currentTarget.classList.remove('drag-over');
+            };
+            const handleDrop = async (e, newStageId) => {
+                e.preventDefault();
+                e.currentTarget.classList.remove('drag-over');
+                if (!draggedContact.value || draggedContact.value.stage === newStageId) return;
+                try {
+                    const now = new Date().toISOString();
+                    await db.collection('users').doc(user.value.uid).collection('contacts').doc(draggedContact.value.id).update({
+                        stage: newStageId, stageChangedAt: now, updatedAt: now
+                    });
+                    const idx = contacts.value.findIndex(c => c.id === draggedContact.value.id);
+                    if (idx !== -1) contacts.value[idx] = { ...contacts.value[idx], stage: newStageId, stageChangedAt: now, updatedAt: now };
+                    showToast('Aşama güncellendi', 'fas fa-check-circle text-green-400');
+                } catch (e) {
+                    showToast('Güncelleme hatası', 'fas fa-times-circle text-red-400');
+                }
+                draggedContact.value = null;
+            };
+
+            // ── CHARTS (FIX: destroy before recreate) ────────────
+            const destroyChart = (key) => {
+                if (chartInstances[key]) {
+                    chartInstances[key].destroy();
+                    chartInstances[key] = null;
+                }
+            };
+
+            const chartDefaults = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                    x: { ticks: { color: '#94a3b8' }, grid: { display: false } }
+                }
+            };
+
+            const initCharts = async () => {
+                await nextTick();
+                initFunnelChart();
+                initPipelineChart();
+                initMonthlyChart();
+                initCategoryChart();
+                initSourceChart();
+            };
+
+            const initFunnelChart = () => {
+                if (!funnelChart.value) return;
+                destroyChart('funnel');
+                const stages = currentStages.value;
+                const cat = contacts.value.filter(c => c.category === currentPipeline.value);
+                chartInstances.funnel = new Chart(funnelChart.value.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: stages.map(s => s.name),
+                        datasets: [{ label: 'Kayıt', data: stages.map(s => cat.filter(c => c.stage === s.id).length), backgroundColor: stages.map(s => s.color + '80'), borderColor: stages.map(s => s.color), borderWidth: 2, borderRadius: 6 }]
+                    },
+                    options: { ...chartDefaults }
+                });
+            };
+
+            const initPipelineChart = () => {
+                if (!pipelineChart.value) return;
+                destroyChart('pipeline');
+                const stages = currentStages.value;
+                const cat = contacts.value.filter(c => c.category === currentPipeline.value);
+                chartInstances.pipeline = new Chart(pipelineChart.value.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: stages.map(s => s.name),
+                        datasets: [{ data: stages.map(s => cat.filter(c => c.stage === s.id && c.price).reduce((sum, c) => sum + c.price, 0)), backgroundColor: stages.map(s => s.color + '80'), borderColor: stages.map(s => s.color), borderWidth: 2 }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', padding: 15 } } } }
+                });
+            };
+
+            const initMonthlyChart = () => {
+                if (!monthlyChart.value) return;
+                destroyChart('monthly');
+                const months = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
+                const data = new Array(12).fill(0);
+                contacts.value.forEach(c => { if (c.createdAt) data[new Date(c.createdAt).getMonth()]++; });
+                chartInstances.monthly = new Chart(monthlyChart.value.getContext('2d'), {
+                    type: 'line',
+                    data: { labels: months, datasets: [{ label: 'Yeni Lead', data, borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.1)', tension: 0.4, fill: true, pointBackgroundColor: '#6366f1', pointRadius: 4 }] },
+                    options: { ...chartDefaults }
+                });
+            };
+
+            const initCategoryChart = () => {
+                if (!categoryChart.value) return;
+                destroyChart('category');
+                chartInstances.category = new Chart(categoryChart.value.getContext('2d'), {
+                    type: 'pie',
+                    data: {
+                        labels: pipelineCategories.map(c => c.label),
+                        datasets: [{ data: pipelineCategories.map(c => contacts.value.filter(ct => ct.category === c.id).length), backgroundColor: ['#3b82f680', '#8b5cf680', '#ec489980', '#f59e0b80'], borderColor: ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b'], borderWidth: 2 }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', padding: 15 } } } }
+                });
+            };
+
+            const initSourceChart = () => {
+                if (!sourceChart.value) return;
+                destroyChart('source');
+                const sources = ['website', 'meta', 'whatsapp', 'manual'];
+                const labels = ['Web Sitesi', 'Meta Ads', 'WhatsApp', 'Manuel'];
+                const counts = sources.map(s => s === 'manual'
+                    ? contacts.value.filter(c => !c.source || c.source === 'manual').length
+                    : contacts.value.filter(c => c.source === s).length
+                );
+                chartInstances.source = new Chart(sourceChart.value.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels,
+                        datasets: [{ data: counts, backgroundColor: ['#10b98180', '#3b82f680', '#22c55e80', '#94a3b880'], borderColor: ['#10b981', '#3b82f6', '#22c55e', '#94a3b8'], borderWidth: 2 }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', padding: 15 } } } }
+                });
+            };
+
+            // ── TOAST ─────────────────────────────────────────────
+            const showToast = (message, icon) => {
+                toast.value = { show: true, message, icon };
+                setTimeout(() => { toast.value.show = false; }, 3000);
+            };
+
+            // ── IMPORT ────────────────────────────────────────────
+            const openImportModal = () => {
+                importPreview.value = []; importSkipped.value = 0;
+                importDragOver.value = false; importCategory.value = 'client';
+                importStage.value = 'new'; showImportModal.value = true;
+            };
+            const closeImportModal = () => { showImportModal.value = false; importPreview.value = []; };
+
+            const parseXlsxRows = (data) => {
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+                if (rows.length < 2) return { parsed: [], skipped: 0 };
+                const header = rows[0].map(h => (h || '').toString().trim().toUpperCase());
+                const colMap = {
+                    isim: header.findIndex(h => h.includes('İSİM') || h.includes('ISIM') || h.includes('AD')),
+                    soyisim: header.findIndex(h => h.includes('SOYİSİM') || h.includes('SOYISIM') || h.includes('SOYAD')),
+                    tel: header.findIndex(h => h.includes('TEL') || h.includes('PHONE') || h.includes('TELEFON')),
+                    proje: header.findIndex(h => h.includes('PROJE') || h.includes('PROJECT') || h.includes('KAYNAK')),
+                    sonuc: header.findIndex(h => h.includes('SONUÇ') || h.includes('SONUC') || h.includes('NOT') || h.includes('RESULT')),
+                    fiyat: header.findIndex(h => h.includes('FİYAT') || h.includes('FIYAT') || h.includes('PRICE')),
+                    ilce: header.findIndex(h => h.includes('İLÇE') || h.includes('ILCE') || h.includes('DISTRICT')),
+                };
+                const parsed = []; let skipped = 0;
+                for (let i = 1; i < rows.length; i++) {
+                    const row = rows[i];
+                    const isim = colMap.isim >= 0 ? (row[colMap.isim] || '') : '';
+                    const soyisim = colMap.soyisim >= 0 ? (row[colMap.soyisim] || '') : '';
+                    const tel = colMap.tel >= 0 ? (row[colMap.tel] || '') : '';
+                    const proje = colMap.proje >= 0 ? (row[colMap.proje] || '') : '';
+                    const sonuc = colMap.sonuc >= 0 ? (row[colMap.sonuc] || '') : '';
+                    const fiyat = colMap.fiyat >= 0 ? (row[colMap.fiyat] || null) : null;
+                    const ilce = colMap.ilce >= 0 ? (row[colMap.ilce] || '') : '';
+                    const name = [isim, soyisim].filter(Boolean).join(' ').trim();
+                    if (!name && !tel) { skipped++; continue; }
+                    parsed.push({ name: name || 'Bilinmiyor', phone: tel.toString().replace(/\s/g, ''), district: ilce || proje || '', notes: [proje ? `Proje: ${proje}` : '', sonuc ? `Sonuç: ${sonuc}` : ''].filter(Boolean).join(' | '), price: fiyat ? parseFloat(fiyat) : null });
+                }
+                return { parsed, skipped };
+            };
+
+            const handleImportFile = (event) => {
+                const file = event.target.files[0];
+                if (file) processImportFile(file);
+            };
+            const handleImportDrop = (event) => {
+                importDragOver.value = false;
+                const file = event.dataTransfer.files[0];
+                if (file) processImportFile(file);
+            };
+            const processImportFile = (file) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const { parsed, skipped } = parseXlsxRows(new Uint8Array(e.target.result));
+                        importPreview.value = parsed; importSkipped.value = skipped;
+                        if (parsed.length === 0) showToast('Geçerli veri bulunamadı', 'fas fa-exclamation-circle text-yellow-400');
+                    } catch (err) { showToast('Dosya okunamadı: ' + err.message, 'fas fa-times-circle text-red-400'); }
+                };
+                reader.readAsArrayBuffer(file);
+            };
+            const executeImport = async () => {
+                if (importing.value || importPreview.value.length === 0) return;
+                importing.value = true; importProgress.value = 0;
+                const now = new Date().toISOString();
+                for (const row of importPreview.value) {
+                    const data = { ...row, source: 'manual', category: importCategory.value, stage: importStage.value, createdAt: now, updatedAt: now };
+                    try {
+                        const docRef = await db.collection('users').doc(user.value.uid).collection('contacts').add(data);
+                        contacts.value.push({ id: docRef.id, ...data });
+                        importProgress.value++;
+                    } catch (e) { console.error('Import error:', e); }
+                }
+                showToast(`${importProgress.value} kayıt içe aktarıldı!`, 'fas fa-check-circle text-green-400');
+                importing.value = false;
+                closeImportModal();
+                initCharts();
+            };
+
+            const exportData = (format) => {
+                showMenu.value = false;
+                if (format === 'excel') {
+                    const csv = ['\ufeff', 'Kategori,Kaynak,Aşama,Ad Soyad,Telefon,İlçe,Fiyat,Oluşturma,Güncelleme,Notlar',
+                        ...contacts.value.map(c => [getCategoryLabel(c.category), getSourceLabel(c.source), c.stage, c.name, c.phone || '', c.district || '', c.price || '', formatDate(c.createdAt), formatDate(c.updatedAt), c.notes || ''].map(v => `"${v}"`).join(','))
+                    ].join('\n');
+                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+                    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'nexa-crm-export.csv'; a.click();
+                    showToast('Excel indirildi', 'fas fa-check-circle text-green-400');
+                } else {
+                    const blob = new Blob([JSON.stringify(contacts.value, null, 2)], { type: 'application/json' });
+                    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'nexa-crm-backup.json'; a.click();
+                    showToast('Yedek alındı', 'fas fa-check-circle text-green-400');
+                }
+            };
+
+            // ── LIFECYCLE ─────────────────────────────────────────
+            onMounted(() => {
+                auth.onAuthStateChanged(async (u) => {
+                    user.value = u;
+                    uiLoading.value = false;
+                    if (u) await loadData();
+                });
+            });
+
+            watch(activeView, (newView) => {
+                if (newView === 'analytics' || newView === 'dashboard') {
+                    setTimeout(initCharts, 150);
+                }
+            });
+
+            watch(currentPipeline, () => {
+                setTimeout(() => {
+                    initFunnelChart();
+                    initPipelineChart();
+                }, 100);
+            });
+
+            // ── RETURN ────────────────────────────────────────────
+            return {
+                user, uiLoading, authMode, authLoading, authError, email, password, displayName,
+                activeView, currentPipeline, contacts, searchQuery, showMenu, showContactModal,
+                editingContact, saving, toast, draggedContact,
+                leadTab, leadSearch, leadSourceFilter, webLeads, newWebLeadCount,
+                showLeadPanel, activeLeadId,
+                activeLead, activeLeadTimeline, activeLeadReminders,
+                newCommentText, newReminderText, newReminderDate,
+                reminders, allActiveReminders, doneReminders, overdueReminders, todayReminders,
+                upcomingReminders, pendingRemindersCount,
+                pipelineCategories, currentStages, dashboardStats, conversionRate,
+                filteredContacts, filteredLeads, recentActivities, conversionMetrics,
+                funnelChart, pipelineChart, monthlyChart, categoryChart, sourceChart,
+                showImportModal, importPreview, importSkipped, importDragOver,
+                importCategory, importStage, importing, importProgress,
+                // ── FOLLOWUP ──
+                followups, activeFollowup, showFollowupForm, followupStarting,
+                editingFollowupWeek, editingFollowupNote, followupNotes,
+                signIn, register, signInWithGoogle, logout,
+                saveContact, deleteContact, openContactDetail, openAddContact, closeContactModal,
+                openLeadPanel, openLeadPanelById, closeLeadPanel, updateLeadStage,
+                addComment, deleteComment, addReminderForLead, quickReminder, sendTelegramNow,
+                doneReminder, deleteReminderFn,
+                // ── FOLLOWUP FUNCTIONS ──
+                startFollowupPlan, cancelFollowupPlan, sendFollowupNow,
+                startEditFollowupWeek, saveFollowupNote, formatDateShort,
+                getStageContacts, getStageCount, getCategoryLabel, getCurrentCategoryStages,
+                getStageBadgeClass, getDaysInStage,
+                getSourceIcon, getSourceLabel, contactsBySource, getContactReminderCount,
+                isOverdue, formatReminderDate,
+                handleDragStart, handleDragOver, handleDragLeave, handleDrop,
+                formatCurrency, formatDate, exportData,
+                openImportModal, closeImportModal, handleImportFile, handleImportDrop, executeImport
+            };
+        }
+    }).mount('#app');
+</script>
+</body>
+</html>
