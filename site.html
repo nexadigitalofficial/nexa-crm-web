@@ -5203,7 +5203,7 @@
 
       track.innerHTML = images.map(function(src, i){
         return src
-          ? '<div class="nxp-slide"><img src="'+esc(src)+'" alt="Fotoğraf '+(i+1)+'" loading="eager"><div class="nxp-slide-overlay"></div></div>'
+          ? '<div class="nxp-slide"><img src="'+esc(src)+'" alt="Fotoğraf '+(i+1)+'" loading="'+(i===0?'eager':'lazy')+'"><div class="nxp-slide-overlay"></div></div>'
           : '<div class="nxp-slide"><div class="nxp-no-img">Görsel mevcut değil</div></div>';
       }).join('');
 
@@ -5394,3 +5394,4 @@
   </script>
 </body>
 </html>
+
