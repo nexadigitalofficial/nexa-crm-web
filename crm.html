@@ -492,21 +492,80 @@
                     </div>
                 </div>
 
-                <!-- CHARTS ROW -->
+                <!-- CHARTS ROW — İkili Bar Huni -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                    <!-- SATICI HUNİSİ -->
                     <div class="glass-strong rounded-2xl p-6">
-                        <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
-                            <i class="fas fa-filter text-indigo-400"></i>Dönüşüm Hunisi
-                        </h3>
-                        <div class="chart-container"><canvas ref="funnelChart"></canvas></div>
+                        <div class="vfunnel-header seller-h">
+                            <div class="vfunnel-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706)">
+                                <i class="fas fa-home"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-bold text-white">Satıcı Hunisi</h3>
+                                <p class="text-xs text-gray-400">FSBO → Değerleme → Satış</p>
+                            </div>
+                            <div class="ml-auto text-right">
+                                <div class="text-lg font-bold text-amber-400">{{ contacts.filter(c=>c.category==='fsbo').length }}</div>
+                                <div class="text-xs text-gray-400">aktif</div>
+                            </div>
+                        </div>
+                        <div class="chart-container"><canvas ref="sellerFunnelChart"></canvas></div>
                     </div>
+
+                    <!-- ALICI HUNİSİ -->
                     <div class="glass-strong rounded-2xl p-6">
-                        <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
-                            <i class="fas fa-chart-bar text-purple-400"></i>Pipeline Değeri
+                        <div class="vfunnel-header buyer-h">
+                            <div class="vfunnel-icon" style="background:linear-gradient(135deg,#06b6d4,#0891b2)">
+                                <i class="fas fa-key"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-bold text-white">Alıcı Hunisi</h3>
+                                <p class="text-xs text-gray-400">Talep → Portföy → Tapu</p>
+                            </div>
+                            <div class="ml-auto text-right">
+                                <div class="text-lg font-bold text-cyan-400">{{ contacts.filter(c=>c.category==='client').length }}</div>
+                                <div class="text-xs text-gray-400">aktif</div>
+                            </div>
+                        </div>
+                        <div class="chart-container"><canvas ref="buyerFunnelChart"></canvas></div>
+                    </div>
+                </div>
+
+                <!-- Pipeline Değeri Donut — full width, centered -->
+                <div class="glass-strong rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold flex items-center gap-2">
+                            <i class="fas fa-chart-pie text-purple-400"></i>Pipeline Değeri
                         </h3>
+                        <div class="flex gap-2 flex-wrap">
+                            <button v-for="cat in pipelineCategories" :key="cat.id"
+                                @click="currentPipeline = cat.id; initPipelineChart()"
+                                :class="currentPipeline === cat.id ? 'bg-indigo-600 text-white' : 'glass text-gray-400 hover:text-white'"
+                                class="px-3 py-1 rounded-full text-xs font-bold transition-all">
+                                {{ cat.label }}
+                            </button>
+                        </div>
+                    </div>
+                    <div style="max-width:400px; margin:0 auto;">
                         <div class="chart-container"><canvas ref="pipelineChart"></canvas></div>
                     </div>
                 </div>
+
+                <style>
+                .vfunnel-header {
+                    display: flex; align-items: center; gap: 12px;
+                    padding: 12px 14px; border-radius: 12px; margin-bottom: 18px;
+                }
+                .vfunnel-header.seller-h { background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.2); }
+                .vfunnel-header.buyer-h  { background:rgba(6,182,212,0.08);  border:1px solid rgba(6,182,212,0.2); }
+                .vfunnel-icon {
+                    width:38px; height:38px; border-radius:10px;
+                    display:flex; align-items:center; justify-content:center;
+                    font-size:16px; color:#fff; flex-shrink:0;
+                }
+                </style>
+                </style>
 
                 <!-- ACTIVITY TIMELINE -->
                 <div class="glass-strong rounded-2xl p-6">
@@ -919,8 +978,36 @@
                         <div class="p-5 space-y-6">
                             <!-- STAGE CHANGE -->
                             <div class="glass rounded-xl p-4">
-                                <p class="text-xs text-gray-400 mb-2 font-medium uppercase tracking-wide">Aşama Değiştir</p>
-                                <div class="flex flex-wrap gap-2">
+                                <div class="flex items-center justify-between mb-2">
+                                    <p class="text-xs text-gray-400 font-medium uppercase tracking-wide">Aşama Değiştir</p>
+                                    <!-- Rapor durumu (web lead) -->
+                                    <div v-if="activeLead._fromWeb" class="flex items-center gap-1.5">
+                                        <span v-if="activeLead.status === 'report_sent' || activeLead.status === 'contacted' || activeLead.status === 'appointment' || activeLead.status === 'closed_won'"
+                                            class="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full"
+                                            style="background:rgba(16,185,129,0.15);color:#34d399;border:1px solid rgba(16,185,129,0.3);">
+                                            <i class="fas fa-check-circle text-xs"></i> Rapor Gönderildi
+                                        </span>
+                                        <span v-else-if="activeLead.status === 'new_lead' || !activeLead.status"
+                                            class="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full"
+                                            style="background:rgba(245,158,11,0.15);color:#fcd34d;border:1px solid rgba(245,158,11,0.3);">
+                                            <i class="fas fa-clock text-xs"></i> Rapor Bekleniyor
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- Web lead için pipeline stage butonları -->
+                                <div v-if="activeLead._fromWeb" class="flex flex-wrap gap-2 mb-3">
+                                    <button v-for="st in webLeadStages" :key="st.id"
+                                        @click="updateWebLeadState(st.id)"
+                                        :class="(activeLead.status || 'new_lead') === st.id ? 'border-indigo-500 bg-indigo-500/20 text-indigo-300' : 'border-white/10 text-gray-400 hover:border-white/30'"
+                                        class="px-3 py-1 rounded-xl text-xs font-medium border transition-all flex items-center gap-1">
+                                        <span :style="{background: st.color}" class="w-2 h-2 rounded-full inline-block"></span>
+                                        {{ st.name }}
+                                    </button>
+                                </div>
+
+                                <!-- Manuel contact için mevcut stage butonları -->
+                                <div v-if="!activeLead._fromWeb" class="flex flex-wrap gap-2">
                                     <button v-for="stage in getCurrentCategoryStages(activeLead.category)" :key="stage.id"
                                         @click="updateLeadStage(stage.id)"
                                         :class="activeLead.stage === stage.id ? 'border-indigo-500 bg-indigo-500/20 text-indigo-300' : 'border-white/10 text-gray-400 hover:border-white/30'"
@@ -1127,8 +1214,15 @@
                                             <p class="text-xs text-gray-500 mt-1">{{ formatDate(item.createdAt) }}</p>
                                         </div>
                                         <div class="glass rounded-lg p-3" v-else-if="item.type === 'stage'">
-                                            <p class="text-sm font-medium">Aşama değişti → <span class="text-indigo-300">{{ item.text }}</span></p>
-                                            <p class="text-xs text-gray-500 mt-0.5">{{ formatDate(item.createdAt) }}</p>
+                                            <div class="flex items-center gap-2 mb-0.5">
+                                                <i class="fas fa-arrow-right text-indigo-400 text-xs"></i>
+                                                <p class="text-sm font-medium">Aşama: <span class="text-indigo-300">{{ item.text }}</span></p>
+                                            </div>
+                                            <div class="flex items-center gap-2 mt-1">
+                                                <p class="text-xs text-gray-500">{{ formatDate(item.createdAt) }}</p>
+                                                <span v-if="item.actor && item.actor !== 'system'" class="text-xs text-gray-600">· {{ item.actor }}</span>
+                                                <span v-if="item.actor === 'system'" class="text-xs px-1.5 py-0.5 rounded-full" style="background:rgba(99,102,241,0.1);color:#818cf8;">⚙️ Otomatik</span>
+                                            </div>
                                         </div>
                                         <div class="glass rounded-lg p-3" v-else>
                                             <p class="text-sm text-gray-300">{{ item.text }}</p>
@@ -1400,7 +1494,8 @@
             const followupNotes       = ref({ week1: '', week2: '', week3: '' });
 
             // CHART REFS
-            const funnelChart = ref(null);
+            const sellerFunnelChart = ref(null);
+            const buyerFunnelChart = ref(null);
             const pipelineChart = ref(null);
             const monthlyChart = ref(null);
             const categoryChart = ref(null);
@@ -1451,6 +1546,66 @@
             };
 
             const currentStages = computed(() => stagesByCategory[currentPipeline.value] || []);
+
+            // ── SATICI & ALICI HUNİSİ AŞAMALARI ─────────────────
+            const sellerStages = [
+                { id: 'contact',   name: 'İlk Temas',    color: '#3b82f6' },
+                { id: 'valuation', name: 'Değerleme',     color: '#8b5cf6' },
+                { id: 'contract',  name: 'Sözleşme',      color: '#ec4899' },
+                { id: 'listed',    name: 'İlanda',         color: '#f59e0b' },
+                { id: 'showing',   name: 'Görüntüleme',   color: '#10b981' },
+                { id: 'offer',     name: 'Teklif',         color: '#06b6d4' },
+                { id: 'closed',    name: 'Satıldı ✓',     color: '#22c55e' },
+            ];
+
+            const buyerStages = [
+                { id: 'new',         name: 'İlk Temas',        color: '#06b6d4' },
+                { id: 'contacted',   name: 'İhtiyaç Analizi',  color: '#3b82f6' },
+                { id: 'meeting',     name: 'Portföy Sunumu',   color: '#8b5cf6' },
+                { id: 'proposal',    name: 'Görüntüleme',      color: '#f59e0b' },
+                { id: 'negotiation', name: 'Teklif',            color: '#ec4899' },
+                { id: 'closed',      name: 'Sözleşme',         color: '#10b981' },
+                { id: 'tapu',        name: 'Tapu ✓',           color: '#22c55e' },
+            ];
+
+            // ── WEB LEAD STATE MACHINE ──────────────────────────
+            const webLeadStages = [
+                { id: 'new_lead',     name: 'Yeni',          color: '#3b82f6' },
+                { id: 'report_sent',  name: 'Rapor Gönderildi', color: '#8b5cf6' },
+                { id: 'contacted',    name: 'İletişim Kuruldu', color: '#f59e0b' },
+                { id: 'appointment',  name: 'Randevu Alındı', color: '#06b6d4' },
+                { id: 'closed_won',   name: '✅ Anlaşıldı',   color: '#22c55e' },
+                { id: 'closed_lost',  name: '❌ Kaybedildi',  color: '#ef4444' },
+            ];
+
+            const updateWebLeadState = async (newStage) => {
+                if (!activeLead.value || !activeLead.value._fromWeb) return;
+                if ((activeLead.value.status || 'new_lead') === newStage) return;
+                try {
+                    const resp = await fetch('/api/lead/state', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            leadId:     activeLead.value.id,
+                            newStage,
+                            actorEmail: user.value?.email || 'crm-user',
+                        })
+                    });
+                    const json = await resp.json();
+                    if (json.ok) {
+                        // Yerel state güncelle
+                        const idx = webLeads.value.findIndex(l => l.id === activeLead.value.id);
+                        if (idx !== -1) webLeads.value[idx] = { ...webLeads.value[idx], status: newStage };
+                        // Event timeline'ı yenile
+                        await loadWebLeadEvents(activeLead.value.id);
+                        showToast('Aşama güncellendi', 'fas fa-check-circle text-green-400');
+                    } else {
+                        showToast('Güncelleme hatası: ' + json.error, 'fas fa-times-circle text-red-400');
+                    }
+                } catch (e) {
+                    showToast('Bağlantı hatası', 'fas fa-times-circle text-red-400');
+                }
+            };
 
             // ── COMPUTED ─────────────────────────────────────────
             const dashboardStats = computed(() => {
@@ -1555,11 +1710,42 @@
                     } || null;
             });
 
+            // Web lead event cache
+            const webLeadEvents = ref([]);
+
             const activeLeadTimeline = computed(() => {
                 if (!activeLead.value) return [];
                 const items = [...(activeLead.value.comments || [])];
+                // Web lead ise backend event'lerini de ekle
+                if (activeLead.value._fromWeb) {
+                    webLeadEvents.value.forEach(ev => {
+                        const payload = ev.payload || {};
+                        items.push({
+                            id: ev.id,
+                            type: ev.type === 'stage_change' ? 'stage' : ev.type,
+                            text: ev.type === 'stage_change'
+                                ? `${payload.from || '?'} → ${payload.to || '?'}${payload.note ? ' · ' + payload.note : ''}`
+                                : JSON.stringify(payload),
+                            createdAt: ev.createdAt,
+                            actor: payload.actor || 'system',
+                            _isEvent: true,
+                        });
+                    });
+                }
                 return items.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
             });
+
+            // Web lead açıldığında backend event'lerini yükle
+            const loadWebLeadEvents = async (leadId) => {
+                if (!leadId) return;
+                try {
+                    const resp = await fetch(`/api/lead/events/${leadId}`);
+                    const json = await resp.json();
+                    if (json.ok) webLeadEvents.value = json.data;
+                } catch (e) {
+                    console.warn('Event yüklenemedi:', e);
+                }
+            };
 
             const activeLeadReminders = computed(() => {
                 if (!activeLeadId.value) return [];
@@ -1816,6 +2002,11 @@
                 showFollowupForm.value = false;
                 editingFollowupWeek.value = null;
                 followupNotes.value = { week1: '', week2: '', week3: '' };
+                // Web lead ise backend event timeline'ı yükle
+                webLeadEvents.value = [];
+                if (contact._fromWeb || webLeads.value.find(l => l.id === contact.id)) {
+                    loadWebLeadEvents(contact.id);
+                }
             };
 
             const openLeadPanelById = (contactId) => {
@@ -2194,25 +2385,87 @@
 
             const initCharts = async () => {
                 await nextTick();
-                initFunnelChart();
+                initSellerFunnelChart();
+                initBuyerFunnelChart();
                 initPipelineChart();
                 initMonthlyChart();
                 initCategoryChart();
                 initSourceChart();
             };
 
-            const initFunnelChart = () => {
-                if (!funnelChart.value) return;
-                destroyChart('funnel');
-                const stages = currentStages.value;
-                const cat = contacts.value.filter(c => c.category === currentPipeline.value);
-                chartInstances.funnel = new Chart(funnelChart.value.getContext('2d'), {
+            const initSellerFunnelChart = () => {
+                if (!sellerFunnelChart.value) return;
+                destroyChart('sellerFunnel');
+                const stages = sellerStages;
+                const cat = contacts.value.filter(c => c.category === 'fsbo');
+                const counts = stages.map(s => cat.filter(c => c.stage === s.id).length);
+                const maxCount = Math.max(...counts, 1);
+                chartInstances.sellerFunnel = new Chart(sellerFunnelChart.value.getContext('2d'), {
                     type: 'bar',
                     data: {
                         labels: stages.map(s => s.name),
-                        datasets: [{ label: 'Kayıt', data: stages.map(s => cat.filter(c => c.stage === s.id).length), backgroundColor: stages.map(s => s.color + '80'), borderColor: stages.map(s => s.color), borderWidth: 2, borderRadius: 6 }]
+                        datasets: [{
+                            label: 'Kayıt',
+                            data: counts.map(c => maxCount > 0 ? c / maxCount : 0),
+                            backgroundColor: stages.map(s => s.color + 'bb'),
+                            borderColor: stages.map(s => s.color),
+                            borderWidth: 2,
+                            borderRadius: 6,
+                        }]
                     },
-                    options: { ...chartDefaults }
+                    options: {
+                        ...chartDefaults,
+                        plugins: {
+                            ...chartDefaults.plugins,
+                            tooltip: {
+                                callbacks: {
+                                    label: (ctx) => {
+                                        const count = counts[ctx.dataIndex];
+                                        const pct = maxCount > 0 ? Math.round(count / maxCount * 100) : 0;
+                                        return ` ${count} kayıt (${pct}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            };
+
+            const initBuyerFunnelChart = () => {
+                if (!buyerFunnelChart.value) return;
+                destroyChart('buyerFunnel');
+                const stages = buyerStages;
+                const cat = contacts.value.filter(c => c.category === 'client');
+                const counts = stages.map(s => cat.filter(c => c.stage === s.id).length);
+                const maxCount = Math.max(...counts, 1);
+                chartInstances.buyerFunnel = new Chart(buyerFunnelChart.value.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: stages.map(s => s.name),
+                        datasets: [{
+                            label: 'Kayıt',
+                            data: counts.map(c => maxCount > 0 ? c / maxCount : 0),
+                            backgroundColor: stages.map(s => s.color + 'bb'),
+                            borderColor: stages.map(s => s.color),
+                            borderWidth: 2,
+                            borderRadius: 6,
+                        }]
+                    },
+                    options: {
+                        ...chartDefaults,
+                        plugins: {
+                            ...chartDefaults.plugins,
+                            tooltip: {
+                                callbacks: {
+                                    label: (ctx) => {
+                                        const count = counts[ctx.dataIndex];
+                                        const pct = maxCount > 0 ? Math.round(count / maxCount * 100) : 0;
+                                        return ` ${count} kayıt (${pct}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
                 });
             };
 
@@ -2404,14 +2657,16 @@
                 activeView, currentPipeline, contacts, searchQuery, showMenu, showContactModal,
                 editingContact, saving, toast, draggedContact,
                 leadTab, leadSearch, leadSourceFilter, webLeads, newWebLeadCount,
+                webLeadStages, updateWebLeadState, webLeadEvents, loadWebLeadEvents,
                 showLeadPanel, activeLeadId,
                 activeLead, activeLeadTimeline, activeLeadReminders,
                 newCommentText, newReminderText, newReminderDate,
                 reminders, allActiveReminders, doneReminders, overdueReminders, todayReminders,
                 upcomingReminders, pendingRemindersCount,
-                pipelineCategories, currentStages, dashboardStats, conversionRate,
+                pipelineCategories, currentStages, sellerStages, buyerStages, dashboardStats, conversionRate,
                 filteredContacts, filteredLeads, recentActivities, conversionMetrics,
-                funnelChart, pipelineChart, monthlyChart, categoryChart, sourceChart,
+                sellerFunnelChart, buyerFunnelChart, pipelineChart, monthlyChart, categoryChart, sourceChart,
+                initPipelineChart,
                 showImportModal, importPreview, importSkipped, importDragOver,
                 importCategory, importStage, importing, importProgress,
                 // ── FOLLOWUP ──
