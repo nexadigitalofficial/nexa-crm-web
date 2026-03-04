@@ -39,6 +39,8 @@
 
     html {
       scroll-behavior: smooth;
+      /* Sabit topbar (44px) + navbar (~70px) = anchor linklerin altına düşmemesi için */
+      scroll-padding-top: 120px;
     }
 
     body {
@@ -304,6 +306,7 @@
       right: 0;
       z-index: 999;
       transition: all 0.4s ease;
+      background: linear-gradient(180deg, rgba(10, 22, 40, 0.85) 0%, rgba(10, 22, 40, 0.45) 70%, transparent 100%);
     }
 
     .nav-wrapper.scrolled {
@@ -341,7 +344,7 @@
     }
 
     .nav-links a {
-      color: rgba(255, 255, 255, 0.9);
+      color: rgba(255, 255, 255, 0.85);
       text-decoration: none;
       font-size: 14px;
       font-weight: 600;
@@ -391,17 +394,19 @@
     @media (max-width: 968px) {
       .nav-links {
         position: fixed;
-        top: 0;
+        top: 44px;            /* topbar yüksekliği kadar aşağı it */
         right: -100%;
         width: 100%;
         max-width: 400px;
-        height: 100vh;
+        height: calc(100vh - 44px);   /* topbar dışı alan */
         background: var(--cream);
         flex-direction: column;
-        padding: 80px 40px;
+        padding: 60px 40px 40px;
         gap: 30px;
         box-shadow: var(--shadow-xl);
         transition: right 0.4s;
+        overflow-y: auto;
+        z-index: 998;
       }
 
       .nav-links.active {
@@ -415,6 +420,20 @@
 
       .mobile-toggle {
         display: flex;
+      }
+
+      /* Karartma overlay — menü açıkken */
+      .nav-overlay {
+        display: none;
+        position: fixed;
+        inset: 44px 0 0 0;
+        background: rgba(10, 22, 40, 0.5);
+        z-index: 997;
+        backdrop-filter: blur(2px);
+      }
+
+      .nav-overlay.active {
+        display: block;
       }
     }
 
@@ -1938,7 +1957,7 @@
     /* -- Hero -- */
     @media (max-width: 768px) {
       .hero-content {
-        padding: 100px 20px 60px;
+        padding: 130px 20px 60px;   /* topbar(44) + nav(~70) + breathing room */
       }
       .hero-badge {
         font-size: 11px;
@@ -2142,6 +2161,117 @@
   </style>
 </head>
 <body>
+  <!-- Top Announcement Bar -->
+  <div class="top-bar" id="topBar">
+    <div class="top-bar-inner">
+      <span class="top-bar-text">
+        <i class="fas fa-star"></i>
+        Dikmen'deki mülkünüzün değerini öğrenmek ister misiniz?
+      </span>
+      <a href="#contact" class="top-bar-btn" id="topBarBtn">
+        <i class="fas fa-tag"></i>
+        Ücretsiz Değerleme Alın
+        <i class="fas fa-arrow-right"></i>
+      </a>
+    </div>
+  </div>
+
+  <style>
+    .top-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      background: linear-gradient(90deg, #0a1628 0%, #1a2d4a 40%, #b8941f 70%, #d4af37 100%);
+      padding: 0;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 20px rgba(212,175,55,0.25);
+    }
+
+    .top-bar-inner {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      max-width: 1400px;
+      width: 100%;
+      padding: 0 40px;
+      justify-content: center;
+    }
+
+    .top-bar-text {
+      color: rgba(255,255,255,0.85);
+      font-size: 13px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .top-bar-text i {
+      color: var(--gold-light);
+      font-size: 12px;
+    }
+
+    .top-bar-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 20px;
+      background: rgba(255,255,255,0.15);
+      border: 1.5px solid rgba(255,255,255,0.35);
+      border-radius: 50px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+      letter-spacing: 0.5px;
+      transition: all 0.3s;
+      white-space: nowrap;
+      backdrop-filter: blur(8px);
+    }
+
+    .top-bar-btn:hover {
+      background: rgba(255,255,255,0.25);
+      border-color: rgba(255,255,255,0.6);
+      transform: translateY(-1px);
+    }
+
+    .top-bar-btn .fa-arrow-right {
+      font-size: 11px;
+      transition: transform 0.3s;
+    }
+
+    .top-bar-btn:hover .fa-arrow-right {
+      transform: translateX(3px);
+    }
+
+    /* Nav wrapper'ı top bar kadar aşağı it */
+    .nav-wrapper {
+      top: 44px !important;
+    }
+
+    @media (max-width: 768px) {
+      .top-bar-text {
+        display: none;
+      }
+      .top-bar-inner {
+        padding: 0 16px;
+        justify-content: center;
+      }
+      .top-bar-btn {
+        font-size: 12px;
+        padding: 6px 16px;
+      }
+      .nav-wrapper {
+        top: 44px !important;
+      }
+    }
+  </style>
+
   <!-- Progress Bar -->
   <div class="progress-bar" id="progressBar"></div>
 
@@ -2177,8 +2307,9 @@
       </div>
     </nav>
   </div>
+  <!-- Mobil menü karartma overlay -->
+  <div class="nav-overlay" id="navOverlay"></div>
 
-  <!-- Trust Bar -->
   <div class="trust-bar" id="trustBar" style="display:none;">
     <div class="trust-item"><i class="fas fa-award"></i> Coldwell Banker Türkiye Ödüllü Danışman</div>
     <div class="trust-item"><i class="fas fa-home"></i> 987 Aktif Portföy</div>
@@ -2698,6 +2829,421 @@
   </section>
 
   <!-- ============================================================ -->
+  <!-- ÜCRETSİZ DEĞERLEME CTA Bölümü -->
+  <!-- ============================================================ -->
+  <section class="valuation-cta-section">
+    <div class="valuation-cta-bg"></div>
+    <div class="valuation-cta-particles"></div>
+    <div class="container" style="position:relative;z-index:2;">
+      <div class="valuation-cta-inner">
+        <!-- Sol: İkon + Metin -->
+        <div class="valuation-cta-text">
+          <div class="valuation-cta-badge">
+            <i class="fas fa-gift"></i>&nbsp; 100% Ücretsiz · 24 Saat İçinde
+          </div>
+          <h2 class="valuation-cta-title">
+            Mülkünüzün Gerçek<br>
+            <span class="valuation-cta-highlight">Piyasa Değerini Öğrenin</span>
+          </h2>
+          <p class="valuation-cta-desc">
+            Dikmen bölgesindeki 15+ yıllık deneyim ve 987 portföy verimizle 
+            mülkünüz için <strong>kapsamlı, ücretsiz değerleme raporu</strong> hazırlıyoruz. 
+            Satmak, kiralamak veya sadece değerini merak etmek için bile olsa.
+          </p>
+          <ul class="valuation-cta-list">
+            <li><i class="fas fa-check-circle"></i> Emsal analizi ve piyasa karşılaştırması</li>
+            <li><i class="fas fa-check-circle"></i> Bölgesel fiyat trendi raporu</li>
+            <li><i class="fas fa-check-circle"></i> Profesyonel danışman değerlendirmesi</li>
+            <li><i class="fas fa-check-circle"></i> Herhangi bir yükümlülük yok</li>
+          </ul>
+        </div>
+
+        <!-- Sağ: CTA Kutusu -->
+        <div class="valuation-cta-box">
+          <div class="valuation-cta-box-header">
+            <div class="valuation-cta-icon-wrap">
+              <i class="fas fa-home-alt"></i>
+            </div>
+            <h3>Ücretsiz Değerleme Al</h3>
+            <p>2 dakikada talebinizi oluşturun</p>
+          </div>
+
+          <div class="valuation-cta-actions">
+            <a href="#contact" class="valuation-btn valuation-btn-primary">
+              <i class="fas fa-file-invoice"></i>
+              <span>
+                <strong>Formu Doldur</strong>
+                <small>24s içinde dönüş garantisi</small>
+              </span>
+              <i class="fas fa-arrow-right valuation-btn-arrow"></i>
+            </a>
+
+            <a href="https://wa.me/905324514008?text=Merhaba%2C%20mülkümün%20ücretsiz%20değerlemesini%20talep%20etmek%20istiyorum."
+               target="_blank" class="valuation-btn valuation-btn-whatsapp">
+              <i class="fab fa-whatsapp"></i>
+              <span>
+                <strong>WhatsApp'tan Yaz</strong>
+                <small>Hemen yanıt alın</small>
+              </span>
+              <i class="fas fa-arrow-right valuation-btn-arrow"></i>
+            </a>
+
+            <a href="tel:+905324514008" class="valuation-btn valuation-btn-phone">
+              <i class="fas fa-phone-alt"></i>
+              <span>
+                <strong>+90 532 451 40 08</strong>
+                <small>Doğrudan arayın</small>
+              </span>
+            </a>
+          </div>
+
+          <div class="valuation-trust-row">
+            <div class="valuation-trust-item">
+              <strong>987</strong><span>Portföy</span>
+            </div>
+            <div class="valuation-trust-divider"></div>
+            <div class="valuation-trust-item">
+              <strong>60M TL</strong><span>Satış Hacmi</span>
+            </div>
+            <div class="valuation-trust-divider"></div>
+            <div class="valuation-trust-item">
+              <strong>250+</strong><span>Mutlu Müşteri</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <style>
+    /* ============================================================
+       ÜCRETSİZ DEĞERLEME CTA — BÖLÜM STİLLERİ
+    ============================================================ */
+    .valuation-cta-section {
+      position: relative;
+      padding: 100px 40px;
+      overflow: hidden;
+    }
+
+    .valuation-cta-bg {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, #0a1628 0%, #1a2d4a 40%, #0d1f38 70%, #0a1628 100%);
+      z-index: 0;
+    }
+
+    /* Dekoratif altın daireler */
+    .valuation-cta-bg::before,
+    .valuation-cta-bg::after {
+      content: '';
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .valuation-cta-bg::before {
+      width: 600px; height: 600px;
+      top: -200px; right: -100px;
+      background: radial-gradient(circle, rgba(212,175,55,0.08) 0%, transparent 65%);
+    }
+
+    .valuation-cta-bg::after {
+      width: 400px; height: 400px;
+      bottom: -150px; left: -100px;
+      background: radial-gradient(circle, rgba(212,175,55,0.06) 0%, transparent 65%);
+    }
+
+    .valuation-cta-inner {
+      display: grid;
+      grid-template-columns: 1fr 440px;
+      gap: 70px;
+      align-items: center;
+    }
+
+    /* Sol: Metin */
+    .valuation-cta-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 22px;
+      background: rgba(212,175,55,0.15);
+      border: 1px solid rgba(212,175,55,0.35);
+      border-radius: 50px;
+      color: var(--gold-light);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+      backdrop-filter: blur(8px);
+      animation: glow 3s ease-in-out infinite;
+    }
+
+    .valuation-cta-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(32px, 4.5vw, 56px);
+      font-weight: 800;
+      color: var(--white);
+      line-height: 1.15;
+      margin-bottom: 22px;
+      letter-spacing: -1px;
+    }
+
+    .valuation-cta-highlight {
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .valuation-cta-desc {
+      color: var(--gray-light);
+      font-size: 17px;
+      line-height: 1.8;
+      margin-bottom: 32px;
+      max-width: 520px;
+    }
+
+    .valuation-cta-desc strong {
+      color: var(--gold-light);
+    }
+
+    .valuation-cta-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .valuation-cta-list li {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: rgba(255,255,255,0.85);
+      font-size: 15px;
+      font-weight: 500;
+    }
+
+    .valuation-cta-list li i {
+      color: var(--gold);
+      font-size: 17px;
+      flex-shrink: 0;
+    }
+
+    /* Sağ: CTA Kutusu */
+    .valuation-cta-box {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(212,175,55,0.25);
+      border-radius: 28px;
+      padding: 40px 36px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 30px 80px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05);
+      transition: transform 0.4s, box-shadow 0.4s;
+    }
+
+    .valuation-cta-box:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 40px 100px rgba(0,0,0,0.4), 0 0 60px rgba(212,175,55,0.08), inset 0 1px 0 rgba(255,255,255,0.05);
+    }
+
+    .valuation-cta-box-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .valuation-cta-icon-wrap {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px;
+      color: var(--deep-navy);
+      margin: 0 auto 18px;
+      box-shadow: 0 8px 25px rgba(212,175,55,0.4);
+    }
+
+    .valuation-cta-box-header h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--white);
+      margin-bottom: 6px;
+    }
+
+    .valuation-cta-box-header p {
+      color: var(--gray-light);
+      font-size: 14px;
+    }
+
+    /* Butonlar */
+    .valuation-cta-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .valuation-btn {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 20px;
+      border-radius: 16px;
+      text-decoration: none;
+      font-family: 'Raleway', sans-serif;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .valuation-btn > i:first-child {
+      font-size: 22px;
+      flex-shrink: 0;
+      width: 28px;
+      text-align: center;
+    }
+
+    .valuation-btn span {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .valuation-btn span strong {
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .valuation-btn span small {
+      font-size: 12px;
+      opacity: 0.75;
+      font-weight: 500;
+    }
+
+    .valuation-btn-arrow {
+      font-size: 13px !important;
+      opacity: 0.6;
+      width: auto !important;
+      transition: transform 0.3s, opacity 0.3s;
+    }
+
+    .valuation-btn:hover .valuation-btn-arrow {
+      transform: translateX(4px);
+      opacity: 1;
+    }
+
+    .valuation-btn-primary {
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+      color: var(--deep-navy);
+      box-shadow: 0 8px 25px rgba(212,175,55,0.35);
+    }
+
+    .valuation-btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 35px rgba(212,175,55,0.5);
+    }
+
+    .valuation-btn-whatsapp {
+      background: linear-gradient(135deg, rgba(37,211,102,0.18) 0%, rgba(18,140,126,0.18) 100%);
+      color: #6ddf9a;
+      border: 1.5px solid rgba(37,211,102,0.35);
+    }
+
+    .valuation-btn-whatsapp:hover {
+      background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+      color: #fff;
+      border-color: transparent;
+      transform: translateY(-2px);
+    }
+
+    .valuation-btn-phone {
+      background: rgba(255,255,255,0.05);
+      color: rgba(255,255,255,0.75);
+      border: 1.5px solid rgba(255,255,255,0.12);
+    }
+
+    .valuation-btn-phone:hover {
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      border-color: rgba(255,255,255,0.25);
+    }
+
+    /* Alt güven çubuğu */
+    .valuation-trust-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 20px 0 4px;
+      border-top: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .valuation-trust-item {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .valuation-trust-item strong {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--gold);
+      display: block;
+    }
+
+    .valuation-trust-item span {
+      font-size: 12px;
+      color: var(--gray-light);
+      font-weight: 600;
+    }
+
+    .valuation-trust-divider {
+      width: 1px;
+      height: 40px;
+      background: rgba(255,255,255,0.1);
+    }
+
+    @media (max-width: 1100px) {
+      .valuation-cta-inner {
+        grid-template-columns: 1fr;
+        gap: 50px;
+      }
+      .valuation-cta-box {
+        max-width: 520px;
+        margin: 0 auto;
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .valuation-cta-section {
+        padding: 70px 20px;
+      }
+      .valuation-cta-box {
+        padding: 30px 22px;
+      }
+      .valuation-cta-desc {
+        font-size: 15px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .valuation-cta-title {
+        font-size: 28px;
+        letter-spacing: -0.5px;
+      }
+      .valuation-btn span strong {
+        font-size: 14px;
+      }
+      .valuation-trust-item strong {
+        font-size: 17px;
+      }
+    }
+  </style>
+
+  <!-- ============================================================ -->
   <!-- HARİTA'DA İLANLAR Bölümü -->
   <!-- ============================================================ -->
   <section class="map-section" id="harita">
@@ -2765,111 +3311,10 @@
         </p>
       </div>
 
-      <div class="blog-two-col">
-        <div>
+      <div>
       <div class="blog-slider">
         <div class="blog-slider-container" id="blogSliderContainer">
-          <!-- Slide 1 -->
-          <div class="blog-slide">
-            <div class="card">
-              <div class="card-img">
-                <img src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=800&q=80" alt="Blog">
-              </div>
-              <div class="card-body">
-                <div style="color: var(--gold); font-size: 12px; font-weight: 700; margin-bottom: 10px;">
-                  <i class="far fa-calendar"></i> 13 Şubat 2026
-                </div>
-                <h3 class="card-title">Dikmen'de Fiyat Trendleri 2026</h3>
-                <p style="color: var(--gray); line-height: 1.7; margin-bottom: 15px;">
-                  Dikmen bölgesinde 2026 yılı ilk çeyreğinde gayrimenkul fiyatlarındaki gelişmeleri ve yatırım fırsatlarını değerlendiriyoruz.
-                </p>
-                <a href="#contact" class="card-link">Devamını Oku <i class="fas fa-arrow-right"></i></a>
-              </div>
-            </div>
-
-            <div class="card">
-              <div class="card-img">
-                <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80" alt="Blog">
-              </div>
-              <div class="card-body">
-                <div style="color: var(--gold); font-size: 12px; font-weight: 700; margin-bottom: 10px;">
-                  <i class="far fa-calendar"></i> 10 Şubat 2026
-                </div>
-                <h3 class="card-title">Dikmen Vadisi Yenileme Projesi</h3>
-                <p style="color: var(--gray); line-height: 1.7; margin-bottom: 15px;">
-                  378.695 m² yeşil alanın yenileme projesinin ikinci fazı başladı. Bölgeye değer katacak yenilikler neler?
-                </p>
-                <a href="#contact" class="card-link">Devamını Oku <i class="fas fa-arrow-right"></i></a>
-              </div>
-            </div>
-
-            <div class="card">
-              <div class="card-img">
-                <img src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80" alt="Blog">
-              </div>
-              <div class="card-body">
-                <div style="color: var(--gold); font-size: 12px; font-weight: 700; margin-bottom: 10px;">
-                  <i class="far fa-calendar"></i> 7 Şubat 2026
-                </div>
-                <h3 class="card-title">Yatırımcılar İçin Dikmen Rehberi</h3>
-                <p style="color: var(--gray); line-height: 1.7; margin-bottom: 15px;">
-                  Dikmen'de gayrimenkul yatırımı yaparken dikkat edilmesi gereken 10 önemli nokta ve uzman tavsiyeleri.
-                </p>
-                <a href="#contact" class="card-link">Devamını Oku <i class="fas fa-arrow-right"></i></a>
-              </div>
-            </div>
-          </div>
-
-          <!-- Slide 2 -->
-          <div class="blog-slide">
-            <div class="card">
-              <div class="card-img">
-                <img src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=800&q=80" alt="Blog">
-              </div>
-              <div class="card-body">
-                <div style="color: var(--gold); font-size: 12px; font-weight: 700; margin-bottom: 10px;">
-                  <i class="far fa-calendar"></i> 5 Şubat 2026
-                </div>
-                <h3 class="card-title">M4 Metro Hattı Yeni Durakları</h3>
-                <p style="color: var(--gray); line-height: 1.7; margin-bottom: 15px;">
-                  Dikmen bölgesini doğrudan etkileyen M4 metro hattının yeni durakları açıldı. Ulaşım kolaylığı artıyor.
-                </p>
-                <a href="#contact" class="card-link">Devamını Oku <i class="fas fa-arrow-right"></i></a>
-              </div>
-            </div>
-
-            <div class="card">
-              <div class="card-img">
-                <img src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80" alt="Blog">
-              </div>
-              <div class="card-body">
-                <div style="color: var(--gold); font-size: 12px; font-weight: 700; margin-bottom: 10px;">
-                  <i class="far fa-calendar"></i> 3 Şubat 2026
-                </div>
-                <h3 class="card-title">Premium Sunum ile Satış Süreleri %60 Azaldı</h3>
-                <p style="color: var(--gray); line-height: 1.7; margin-bottom: 15px;">
-                  Profesyonel fotoğraf çekimi ve dijital pazarlama stratejilerinin satış sürelerine etkisi.
-                </p>
-                <a href="#contact" class="card-link">Devamını Oku <i class="fas fa-arrow-right"></i></a>
-              </div>
-            </div>
-
-            <div class="card">
-              <div class="card-img">
-                <img src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=800&q=80" alt="Blog">
-              </div>
-              <div class="card-body">
-                <div style="color: var(--gold); font-size: 12px; font-weight: 700; margin-bottom: 10px;">
-                  <i class="far fa-calendar"></i> 1 Şubat 2026
-                </div>
-                <h3 class="card-title">Dikmen'de Yaşam Kalitesi Artıyor</h3>
-                <p style="color: var(--gray); line-height: 1.7; margin-bottom: 15px;">
-                  Yeni açılan sosyal tesisler, kafeler ve spor alanları ile Dikmen'de yaşam kalitesi yükseliyor.
-                </p>
-                <a href="#contact" class="card-link">Devamını Oku <i class="fas fa-arrow-right"></i></a>
-              </div>
-            </div>
-          </div>
+          <!-- Blog yazıları JS tarafından yüklenecek -->
         </div>
 
         <button class="blog-nav prev" id="blogPrev">
@@ -2882,34 +3327,7 @@
 
       <div class="blog-dots" id="blogDots"></div>
         </div><!-- end blog left col -->
-
-        <!-- Blog CTA Widget (Sağ Kolon) -->
-        <div class="blog-cta-widget">
-          <h3>Ücretsiz Gayrimenkul Değerleme</h3>
-          <p>Dikmen'deki mülkünüzün güncel piyasa değerini öğrenmek ister misiniz? 24 saat içinde ücretsiz değerleme raporu gönderiyoruz.</p>
-          <a href="#contact" class="btn btn-primary" style="font-size:14px;padding:14px 24px;">
-            <span>Hemen Talep Et</span>
-            <i class="fas fa-arrow-right"></i>
-          </a>
-          <a href="https://wa.me/905324514008?text=Merhaba%2C%20ücretsiz%20değerleme%20talep%20ediyorum" class="btn" target="_blank" style="background:rgba(37,211,102,0.15);color:#25d366;border:2px solid rgba(37,211,102,0.4);font-size:14px;padding:14px 24px;">
-            <i class="fab fa-whatsapp" style="font-size:18px;"></i>
-            <span>WhatsApp'tan Yaz</span>
-          </a>
-          <hr class="blog-widget-divider">
-          <p style="text-align:center;font-size:13px;margin-bottom:12px;">Bizi takip edin</p>
-          <div class="blog-cta-widget-social">
-            <a href="https://instagram.com/erdoganisikozel" target="_blank"><i class="fab fa-instagram"></i></a>
-            <a href="https://linkedin.com/in/erdoganisikozel" target="_blank"><i class="fab fa-linkedin-in"></i></a>
-            <a href="https://wa.me/905324514008" target="_blank"><i class="fab fa-whatsapp"></i></a>
-          </div>
-          <hr class="blog-widget-divider">
-          <div style="background:rgba(212,175,55,0.1);border-radius:14px;padding:20px;text-align:center;">
-            <div style="color:var(--gold);font-size:28px;font-weight:700;font-family:'Playfair Display',serif;">987</div>
-            <div style="color:var(--gray-light);font-size:13px;margin-top:4px;">Aktif Portföy</div>
-          </div>
-        </div>
-      </div><!-- end blog-two-col -->
-    </div><!-- end container -->
+      </div><!-- end container -->
   </section>
 
   <!-- Testimonials Section -->
@@ -3755,47 +4173,188 @@
     });
 
     // ============================================================
-    // BLOG SLIDER
+    // BLOG SLIDER — Dynamic (API)
     // ============================================================
+    const FALLBACK_POSTS = [
+      {
+        title: "Dikmen'de Fiyat Trendleri 2026",
+        summary: "Dikmen bölgesinde 2026 yılı ilk çeyreğinde gayrimenkul fiyatlarındaki gelişmeleri ve yatırım fırsatlarını değerlendiriyoruz.",
+        image: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=800&q=80",
+        createdAt: "2026-02-13T00:00:00.000Z"
+      },
+      {
+        title: "Dikmen Vadisi Yenileme Projesi",
+        summary: "378.695 m² yeşil alanın yenileme projesinin ikinci fazı başladı. Bölgeye değer katacak yenilikler neler?",
+        image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80",
+        createdAt: "2026-02-10T00:00:00.000Z"
+      },
+      {
+        title: "Yatırımcılar İçin Dikmen Rehberi",
+        summary: "Dikmen'de gayrimenkul yatırımı yaparken dikkat edilmesi gereken 10 önemli nokta ve uzman tavsiyeleri.",
+        image: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80",
+        createdAt: "2026-02-07T00:00:00.000Z"
+      },
+      {
+        title: "M4 Metro Hattı Yeni Durakları",
+        summary: "Dikmen bölgesini doğrudan etkileyen M4 metro hattının yeni durakları açıldı. Ulaşım kolaylığı artıyor.",
+        image: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=800&q=80",
+        createdAt: "2026-02-05T00:00:00.000Z"
+      },
+      {
+        title: "Premium Sunum ile Satış Süreleri %60 Azaldı",
+        summary: "Profesyonel fotoğraf çekimi ve dijital pazarlama stratejilerinin satış sürelerine etkisi.",
+        image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80",
+        createdAt: "2026-02-03T00:00:00.000Z"
+      },
+      {
+        title: "Dikmen'de Yaşam Kalitesi Artıyor",
+        summary: "Yeni açılan sosyal tesisler, kafeler ve spor alanları ile Dikmen'de yaşam kalitesi yükseliyor.",
+        image: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=800&q=80",
+        createdAt: "2026-02-01T00:00:00.000Z"
+      }
+    ];
+
     const blogSliderContainer = document.getElementById('blogSliderContainer');
     const blogPrev = document.getElementById('blogPrev');
     const blogNext = document.getElementById('blogNext');
     const blogDots = document.getElementById('blogDots');
     let currentSlide = 0;
-    const totalSlides = blogSliderContainer.children.length;
+    let blogAutoInterval = null;
 
-    // Create dots
-    for (let i = 0; i < totalSlides; i++) {
-      const dot = document.createElement('div');
-      dot.className = 'blog-dot' + (i === 0 ? ' active' : '');
-      dot.addEventListener('click', () => goToSlide(i));
-      blogDots.appendChild(dot);
+    // Global blog posts store — modal için
+    let _allBlogPosts = [];
+
+    function buildBlogCard(post) {
+      const dateStr = post.createdAt
+        ? new Date(post.createdAt).toLocaleDateString('tr-TR', {day:'numeric', month:'long', year:'numeric'})
+        : '';
+      const imgSrc = post.image || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=800&q=80';
+      const hasContent = !!(post.content || post.summary);
+      const safeId = (post.id || post.title || '').replace(/'/g,"\\'");
+      return `
+        <div class="card" style="cursor:pointer" onclick="openBlogModal('${safeId}')">
+          <div class="card-img">
+            <img src="${imgSrc}" alt="${post.title}" loading="lazy">
+          </div>
+          <div class="card-body">
+            <div style="color: var(--gold); font-size: 12px; font-weight: 700; margin-bottom: 10px;">
+              <i class="far fa-calendar"></i> ${dateStr}
+            </div>
+            <h3 class="card-title">${post.title}</h3>
+            <p style="color: var(--gray); line-height: 1.7; margin-bottom: 15px;">
+              ${post.summary || ''}
+            </p>
+            <span class="card-link" style="cursor:pointer">Devamını Oku <i class="fas fa-arrow-right"></i></span>
+          </div>
+        </div>`;
     }
 
-    function goToSlide(index) {
-      currentSlide = index;
-      blogSliderContainer.style.transform = `translateX(-${currentSlide * 100}%)`;
-      
-      document.querySelectorAll('.blog-dot').forEach((dot, i) => {
-        dot.classList.toggle('active', i === currentSlide);
+    function openBlogModal(idOrTitle) {
+      const post = _allBlogPosts.find(p => (p.id || p.title) === idOrTitle);
+      if (!post) return;
+
+      const m = document.getElementById('blogModal');
+      const img = document.getElementById('blogModalCoverImg');
+      const imgWrap = document.getElementById('blogModalImg');
+
+      if (post.image) {
+        img.src = post.image; img.style.display = 'block'; imgWrap.style.display = 'block';
+      } else { imgWrap.style.display = 'none'; }
+
+      const cat = document.getElementById('blogModalCategory');
+      cat.textContent = post.category || ''; cat.style.display = post.category ? 'inline-block' : 'none';
+
+      const dateEl = document.getElementById('blogModalDate');
+      if (post.createdAt) {
+        const d = new Date(post.createdAt);
+        dateEl.innerHTML = '<i class="far fa-calendar"></i> ' + d.toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'});
+        dateEl.style.display = 'flex';
+      } else { dateEl.style.display = 'none'; }
+
+      const rt = document.getElementById('blogModalReadTime');
+      if (post.readTime) {
+        rt.innerHTML = '<i class="far fa-clock"></i> ' + post.readTime + ' okuma';
+        rt.style.display = 'flex';
+      } else { rt.style.display = 'none'; }
+
+      document.getElementById('blogModalTitle').textContent   = post.title   || '';
+      document.getElementById('blogModalSummary').textContent = post.summary || '';
+      document.getElementById('blogModalContent').textContent = post.content || '';
+
+      if (!post.content) {
+        document.getElementById('blogModalSummary').style.cssText = 'font-size:17px;color:#4a5568;line-height:1.75;margin-bottom:28px;';
+      } else {
+        document.getElementById('blogModalSummary').style.cssText = 'font-size:17px;color:#4a5568;line-height:1.75;margin-bottom:28px;border-left:3px solid #d4af37;padding-left:18px;font-style:italic;';
+      }
+
+      m.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function initBlogSlider(posts) {
+      _allBlogPosts = posts;
+      // 3'erli gruplara böl
+      const slides = [];
+      for (let i = 0; i < posts.length; i += 3) {
+        slides.push(posts.slice(i, i + 3));
+      }
+      if (!slides.length) return;
+
+      blogSliderContainer.innerHTML = slides.map(group =>
+        `<div class="blog-slide">${group.map(buildBlogCard).join('')}</div>`
+      ).join('');
+
+      blogDots.innerHTML = '';
+      currentSlide = 0;
+
+      slides.forEach((_, i) => {
+        const dot = document.createElement('div');
+        dot.className = 'blog-dot' + (i === 0 ? ' active' : '');
+        dot.addEventListener('click', () => goToSlide(i));
+        blogDots.appendChild(dot);
       });
+
+      function goToSlide(index) {
+        currentSlide = index;
+        blogSliderContainer.style.transform = `translateX(-${currentSlide * 100}%)`;
+        document.querySelectorAll('.blog-dot').forEach((dot, i) => {
+          dot.classList.toggle('active', i === currentSlide);
+        });
+      }
+
+      const total = slides.length;
+      blogPrev.onclick = () => { goToSlide((currentSlide - 1 + total) % total); };
+      blogNext.onclick = () => { goToSlide((currentSlide + 1) % total); };
+
+      if (blogAutoInterval) clearInterval(blogAutoInterval);
+      blogAutoInterval = setInterval(() => {
+        goToSlide((currentSlide + 1) % total);
+      }, 5000);
     }
 
-    blogPrev.addEventListener('click', () => {
-      currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
-      goToSlide(currentSlide);
-    });
+    // Blog API'den yükle, başarısız olursa fallback kullan
+    (async function loadBlog() {
+      try {
+        const res = await fetch('/api/blog/posts');
+        const data = await res.json();
+        const posts = (data.data && data.data.length > 0) ? data.data : FALLBACK_POSTS;
+        initBlogSlider(posts);
+      } catch (e) {
+        initBlogSlider(FALLBACK_POSTS);
+      }
+    })();
 
-    blogNext.addEventListener('click', () => {
-      currentSlide = (currentSlide + 1) % totalSlides;
-      goToSlide(currentSlide);
+    // Top Bar smooth scroll
+    document.getElementById('topBarBtn').addEventListener('click', function(e) {
+      e.preventDefault();
+      const target = document.querySelector('#contact');
+      if (target) {
+        const topBarH = (document.getElementById('topBar') || {}).offsetHeight || 44;
+        const navH    = (document.getElementById('navbar') || {}).offsetHeight || 70;
+        const top = target.getBoundingClientRect().top + window.pageYOffset - (topBarH + navH + 8);
+        window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+      }
     });
-
-    // Auto slide
-    setInterval(() => {
-      currentSlide = (currentSlide + 1) % totalSlides;
-      goToSlide(currentSlide);
-    }, 5000);
 
     // Page Loader
     window.addEventListener('load', () => {
@@ -3816,26 +4375,49 @@
 
     // Mobile Menu Toggle
     const mobileToggle = document.getElementById('mobileToggle');
-    const navLinks = document.getElementById('navLinks');
-    
+    const navLinks     = document.getElementById('navLinks');
+    const navOverlay   = document.getElementById('navOverlay');
+
+    function openMenu() {
+      navLinks.classList.add('active');
+      navOverlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeMenu() {
+      navLinks.classList.remove('active');
+      navOverlay.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
     mobileToggle.addEventListener('click', () => {
-      navLinks.classList.toggle('active');
+      navLinks.classList.contains('active') ? closeMenu() : openMenu();
     });
+
+    navOverlay.addEventListener('click', closeMenu);
 
     // Close mobile menu on link click
     document.querySelectorAll('.nav-links a').forEach(link => {
-      link.addEventListener('click', () => {
-        navLinks.classList.remove('active');
-      });
+      link.addEventListener('click', closeMenu);
     });
 
-    // Smooth Scroll
+    // Smooth Scroll — sabit header offset'ini hesaba katar
+    function getScrollOffset() {
+      const topBar = document.getElementById('topBar');
+      const navbar = document.getElementById('navbar');
+      const topBarH = topBar ? topBar.offsetHeight : 44;
+      const navH    = navbar ? navbar.offsetHeight : 70;
+      return topBarH + navH + 8;   // 8px ekstra breathing room
+    }
+
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
       anchor.addEventListener('click', function (e) {
         e.preventDefault();
         const target = document.querySelector(this.getAttribute('href'));
         if (target) {
-          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          const offset = getScrollOffset();
+          const top = target.getBoundingClientRect().top + window.pageYOffset - offset;
+          window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
         }
       });
     });
@@ -3910,13 +4492,31 @@
               <span>Gösterim</span>
             </a>
           </div>
-          <a href="${escapeHtml(listing.link || '#contact')}" class="card-link" target="_blank">
+          <button class="card-link"
+            onclick="nexaIncele(this)"
+            data-url="${escapeHtml(listing.link || '')}"
+            style="background:none;border:none;cursor:pointer;width:100%;text-align:left;padding:0;">
             İlanı İncele <i class="fas fa-arrow-right"></i>
-          </a>
+          </button>
         </div>
       `;
+
       return card;
     }
+
+    // Global incele handler
+    window.nexaIncele = function(btn) {
+      var url = btn.getAttribute('data-url');
+      console.log('[nexaIncele] url =', url);
+      if (!url) { console.warn('[nexaIncele] URL yok!'); return; }
+      if (url.includes('cb.com.tr') && window.NexaPreview) {
+        window.NexaPreview.open(url);
+      } else if (url.startsWith('http')) {
+        window.open(url, '_blank');
+      } else {
+        console.warn('[nexaIncele] Geçersiz URL:', url);
+      }
+    };
 
     // Load Demo Portfolio
     function loadDemoPortfolio(status, grid) {
@@ -4062,7 +4662,7 @@
         const source = detectSource();
 
         // 1. Firestore leads koleksiyonuna kaydet
-        await addDoc(collection(db, "leads"), {
+        const leadRef = await addDoc(collection(db, "leads"), {
           name,
           phone,
           email:         data.email         || null,
@@ -4083,25 +4683,25 @@
             referrer: document.referrer || null,
           }
         });
+        const leadId = leadRef.id;
 
-        // 2. Telegram bildirimi gönder (backend'e istek)
+        // 2. Otomatik rapor gönder + lead state tracking
         try {
-          await fetch('/api/telegram/notify', {
+          await fetch('/api/lead/report', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
+              leadId:        leadId,
               name,
               phone,
-              email:    data.email        || '-',
-              source,
-              category: data.property_type || '',
-              message:  data.notes        || '',
-              stage:    'Yeni Lead'
+              email:         data.email         || '',
+              neighborhood:  data.neighborhood   || '',
+              property_type: data.property_type  || '',
+              notes:         data.notes          || '',
             })
           });
-        } catch (telegramErr) {
-          // Telegram hatası formu engellemez
-          console.warn("Telegram bildirimi gönderilemedi:", telegramErr);
+        } catch (reportErr) {
+          console.warn("Rapor gönderilemedi:", reportErr);
         }
 
         // Başarı
@@ -4272,6 +4872,525 @@
       }, { passive: true });
     })();
 
+  </script>
+
+  <!-- ============================================================
+       BLOG DETAIL MODAL
+       ============================================================ -->
+  <div id="blogModal" style="
+    display:none; position:fixed; inset:0; z-index:9000;
+    background:rgba(10,22,40,.75); backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    align-items:flex-start; justify-content:center;
+    padding:40px 20px; overflow-y:auto;
+  ">
+    <div style="
+      background:#ffffff; border-radius:24px;
+      width:100%; max-width:760px;
+      box-shadow:0 30px 80px rgba(0,0,0,.3);
+      overflow:hidden; position:relative;
+      animation:blogModalIn .3s ease;
+    ">
+      <!-- Kapak Görseli -->
+      <div id="blogModalImg" style="
+        width:100%; height:320px; overflow:hidden;
+        background:#f0ece1; position:relative;
+      ">
+        <img id="blogModalCoverImg" src="" alt="" style="
+          width:100%; height:100%; object-fit:cover;
+          display:block;
+        ">
+        <!-- Kapat butonu -->
+        <button onclick="closeBlogModal()" style="
+          position:absolute; top:16px; right:16px;
+          width:40px; height:40px; border-radius:50%;
+          background:rgba(0,0,0,.45); border:none;
+          color:#fff; font-size:18px; cursor:pointer;
+          display:flex; align-items:center; justify-content:center;
+          transition:background .2s; backdrop-filter:blur(6px);
+        " onmouseover="this.style.background='rgba(0,0,0,.7)'"
+           onmouseout="this.style.background='rgba(0,0,0,.45)'">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <!-- İçerik -->
+      <div style="padding:36px 40px 44px;">
+        <!-- Meta -->
+        <div style="display:flex; align-items:center; gap:14px; margin-bottom:18px; flex-wrap:wrap;">
+          <span id="blogModalCategory" style="
+            background:rgba(212,175,55,.12); color:#b8941f;
+            border:1px solid rgba(212,175,55,.3);
+            padding:5px 14px; border-radius:20px;
+            font-size:12px; font-weight:700; letter-spacing:.05em;
+            text-transform:uppercase;
+          "></span>
+          <span id="blogModalDate" style="
+            color:#6e6e73; font-size:13px;
+            display:flex; align-items:center; gap:5px;
+          "></span>
+          <span id="blogModalReadTime" style="
+            color:#6e6e73; font-size:13px;
+            display:flex; align-items:center; gap:5px;
+          "></span>
+        </div>
+
+        <!-- Başlık -->
+        <h2 id="blogModalTitle" style="
+          font-family:'Playfair Display',serif;
+          font-size:clamp(22px,4vw,34px);
+          font-weight:700; color:#0a1628;
+          line-height:1.2; margin-bottom:18px;
+          letter-spacing:-.5px;
+        "></h2>
+
+        <!-- Özet (summary) -->
+        <p id="blogModalSummary" style="
+          font-size:17px; color:#4a5568;
+          line-height:1.75; margin-bottom:28px;
+          border-left:3px solid #d4af37;
+          padding-left:18px;
+          font-style:italic;
+        "></p>
+
+        <!-- Tam İçerik -->
+        <div id="blogModalContent" style="
+          font-size:16px; color:#1d1d1f;
+          line-height:1.8;
+          white-space:pre-line;
+        "></div>
+
+        <!-- CTA -->
+        <div style="margin-top:36px; padding-top:28px; border-top:1px solid rgba(0,0,0,.08); display:flex; gap:12px; flex-wrap:wrap;">
+          <a href="https://wa.me/905324514008" target="_blank" style="
+            display:inline-flex; align-items:center; gap:8px;
+            padding:13px 24px; background:#d4af37; color:#fff;
+            border-radius:50px; font-size:14px; font-weight:700;
+            text-decoration:none; transition:opacity .2s;
+          " onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+            <i class="fab fa-whatsapp" style="font-size:18px;"></i> WhatsApp'tan Danış
+          </a>
+          <button onclick="closeBlogModal()" style="
+            padding:13px 24px; background:transparent;
+            border:1.5px solid rgba(0,0,0,.15); border-radius:50px;
+            font-size:14px; font-weight:600; color:#4a5568;
+            cursor:pointer; transition:border-color .2s;
+          " onmouseover="this.style.borderColor='rgba(0,0,0,.35)'"
+             onmouseout="this.style.borderColor='rgba(0,0,0,.15)'">
+            Kapat
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    @keyframes blogModalIn {
+      from { opacity:0; transform:translateY(24px) scale(.97); }
+      to   { opacity:1; transform:translateY(0)    scale(1);   }
+    }
+    #blogModal.open { display:flex !important; }
+  </style>
+
+  <script>
+    function closeBlogModal() {
+      document.getElementById('blogModal').style.display = 'none';
+      document.body.style.overflow = '';
+    }
+    document.getElementById('blogModal').addEventListener('click', function(e) {
+      if (e.target === this) closeBlogModal();
+    });
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeBlogModal();
+    });
+  </script>
+
+  <!-- ============================================================
+       NexaPreview — CB İlan Detay Önizleme Modali
+       ============================================================ -->
+  <style>
+    /* ── Overlay ── */
+    #nxp-overlay {
+      position:fixed;inset:0;z-index:99999;
+      background:rgba(0,0,0,.88);backdrop-filter:blur(12px);
+      display:flex;align-items:center;justify-content:center;
+      padding:16px;box-sizing:border-box;
+      opacity:0;pointer-events:none;transition:opacity .3s ease;
+    }
+    #nxp-overlay.nxp-open{opacity:1;pointer-events:auto;}
+
+    /* ── Modal ── */
+    #nxp-modal {
+      background:#141419;border:1px solid rgba(255,255,255,.07);
+      border-radius:8px;width:100%;max-width:860px;
+      max-height:95vh;overflow-y:auto;position:relative;
+      display:flex;flex-direction:column;
+      transform:translateY(30px) scale(.97);
+      transition:transform .42s cubic-bezier(.22,.61,.36,1);
+      scrollbar-width:thin;scrollbar-color:rgba(201,168,76,.13) transparent;
+    }
+    #nxp-overlay.nxp-open #nxp-modal{transform:translateY(0) scale(1);}
+    #nxp-modal::-webkit-scrollbar{width:4px}
+    #nxp-modal::-webkit-scrollbar-thumb{background:rgba(201,168,76,.2);border-radius:2px}
+
+    /* ── Slider ── */
+    #nxp-sl-wrap{position:relative;background:#000;flex-shrink:0;user-select:none}
+    #nxp-sl-track{display:flex;overflow:hidden;touch-action:pan-y;transition:transform .4s cubic-bezier(.22,.61,.36,1)}
+    .nxp-slide{min-width:100%;position:relative}
+    .nxp-slide img{width:100%;display:block;max-height:440px;object-fit:cover}
+    .nxp-slide-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 55%,rgba(0,0,0,.55));pointer-events:none}
+
+    /* arrows */
+    .nxp-sl-btn{
+      position:absolute;top:50%;transform:translateY(-50%);
+      width:40px;height:40px;border-radius:50%;
+      background:rgba(0,0,0,.55);backdrop-filter:blur(6px);
+      border:1px solid rgba(255,255,255,.15);color:#fff;
+      display:flex;align-items:center;justify-content:center;
+      cursor:pointer;z-index:10;font-size:1.1rem;
+      transition:background .2s,border-color .2s;
+    }
+    .nxp-sl-btn:hover{background:#c9a84c;border-color:#c9a84c;color:#0c0c11}
+    #nxp-sl-prev{left:14px}#nxp-sl-next{right:14px}
+
+    /* dots */
+    #nxp-sl-dots{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:10}
+    .nxp-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.4);cursor:pointer;border:none;padding:0;transition:background .2s,transform .2s}
+    .nxp-dot.active{background:#c9a84c;transform:scale(1.4)}
+
+    /* counter */
+    #nxp-sl-count{position:absolute;top:12px;right:14px;z-index:10;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);color:#fff;font-size:.7rem;padding:4px 9px;border-radius:2px}
+
+    /* close */
+    #nxp-close{position:absolute;top:13px;left:14px;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s;z-index:20}
+    #nxp-close:hover{background:#c9a84c;color:#0c0c11;border-color:#c9a84c}
+
+    /* ── Thumbnail strip ── */
+    #nxp-thumbs{display:flex;gap:6px;padding:10px 20px;overflow-x:auto;background:rgba(0,0,0,.35);flex-shrink:0;scrollbar-width:thin;scrollbar-color:rgba(201,168,76,.13) transparent}
+    #nxp-thumbs::-webkit-scrollbar{height:3px}
+    #nxp-thumbs::-webkit-scrollbar-thumb{background:rgba(201,168,76,.2)}
+    .nxp-thumb{width:70px;height:46px;flex-shrink:0;border-radius:3px;overflow:hidden;border:1.5px solid transparent;cursor:pointer;opacity:.55;transition:border-color .2s,opacity .2s}
+    .nxp-thumb:hover,.nxp-thumb.active{border-color:#c9a84c;opacity:1}
+    .nxp-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+
+    /* ── Body ── */
+    #nxp-body{padding:26px 30px 34px}
+
+    #nxp-m-tag{display:inline-block;font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:#c9a84c;border:1px solid rgba(201,168,76,.2);padding:4px 10px;border-radius:2px;margin-bottom:11px}
+    #nxp-m-title{font-family:'Playfair Display',serif;font-size:1.7rem;font-weight:600;color:#fff;line-height:1.25;margin-bottom:9px}
+    #nxp-m-loc{display:flex;align-items:center;gap:6px;font-size:.79rem;color:#6b6879;margin-bottom:22px}
+
+    /* stats grid */
+    #nxp-m-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:1px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.07);border-radius:4px;overflow:hidden;margin-bottom:22px}
+    .nxp-stat{background:#1b1b24;padding:15px 17px;display:flex;flex-direction:column;gap:4px}
+    .nxp-stat-l{font-size:.57rem;letter-spacing:.1em;text-transform:uppercase;color:#6b6879}
+    .nxp-stat-v{font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:500;color:#fff}
+
+    /* features */
+    .nxp-feats-title{font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:#6b6879;margin-bottom:10px}
+    .nxp-feat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:7px;margin-bottom:22px}
+    .nxp-feat-row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:8px 12px;background:#1b1b24;border:1px solid rgba(255,255,255,.07);border-radius:3px;font-size:.76rem}
+    .nxp-feat-row .fl{color:#6b6879}.nxp-feat-row .fv{color:#e3dfd7;font-weight:500;text-align:right}
+
+    /* description */
+    #nxp-m-desc{font-size:.82rem;line-height:1.65;color:#6b6879;margin-bottom:22px;padding:14px 16px;background:#1b1b24;border:1px solid rgba(255,255,255,.07);border-radius:4px}
+
+    /* price bar */
+    #nxp-m-price-bar{display:flex;align-items:baseline;gap:14px;padding:20px 0;border-top:1px solid rgba(255,255,255,.07);border-bottom:1px solid rgba(255,255,255,.07);margin-bottom:20px}
+    .nxp-price-lbl{font-size:.67rem;letter-spacing:.1em;text-transform:uppercase;color:#6b6879}
+    #nxp-m-price{font-family:'Playfair Display',serif;font-size:2.2rem;font-weight:600;color:#e8c97a;line-height:1}
+
+    /* agent */
+    #nxp-m-agent{display:flex;align-items:center;gap:14px;background:#1b1b24;border:1px solid rgba(255,255,255,.07);border-radius:4px;padding:15px 17px;margin-bottom:20px}
+    #nxp-m-agent img{width:44px;height:44px;border-radius:50%;border:1px solid #c9a84c;object-fit:cover;flex-shrink:0}
+    .nxp-agent-av-placeholder{width:44px;height:44px;border-radius:50%;background:rgba(201,168,76,.13);border:1px solid #c9a84c;display:flex;align-items:center;justify-content:center;color:#c9a84c;font-size:.9rem;flex-shrink:0}
+    .nxp-aname{font-size:.88rem;font-weight:500;color:#fff}
+    .nxp-aoff{font-size:.67rem;color:#c9a84c;margin-top:2px;letter-spacing:.07em}
+
+    /* actions */
+    #nxp-m-actions{display:flex;gap:10px}
+    .nxp-btn{flex:1;padding:13px;border-radius:3px;font-size:.72rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:7px;transition:all .2s;border:1px solid transparent}
+    .nxp-btn-gold{background:#c9a84c;color:#0c0c11;border-color:#c9a84c}
+    .nxp-btn-gold:hover{background:#e8c97a;border-color:#e8c97a}
+    .nxp-btn-out{background:transparent;color:#e3dfd7;border-color:rgba(255,255,255,.07)}
+    .nxp-btn-out:hover{border-color:#c9a84c;color:#c9a84c}
+
+    /* loader */
+    #nxp-loader{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px;gap:16px;color:#6b6879;font-size:.82rem}
+    .nxp-spinner{width:36px;height:36px;border:3px solid rgba(201,168,76,.15);border-top-color:#c9a84c;border-radius:50%;animation:nxpSpin .75s linear infinite}
+    @keyframes nxpSpin{to{transform:rotate(360deg)}}
+
+    /* no-img */
+    .nxp-no-img{width:100%;height:280px;display:flex;align-items:center;justify-content:center;background:#1b1b24;color:#6b6879;font-size:.8rem}
+
+    /* responsive */
+    @media(max-width:600px){
+      #nxp-body{padding:18px 16px 28px}
+      #nxp-m-title{font-size:1.3rem}
+      #nxp-m-price{font-size:1.8rem}
+      #nxp-m-actions{flex-direction:column}
+      .nxp-sl-btn{display:none}
+    }
+  </style>
+
+  <!-- Modal HTML -->
+  <div id="nxp-overlay" role="dialog" aria-modal="true" aria-label="İlan Önizleme">
+    <div id="nxp-modal">
+      <!-- Kapat -->
+      <button id="nxp-close" aria-label="Kapat">✕</button>
+
+      <!-- SLIDER -->
+      <div id="nxp-sl-wrap">
+        <div id="nxp-sl-track"></div>
+        <button class="nxp-sl-btn" id="nxp-sl-prev">&#8592;</button>
+        <button class="nxp-sl-btn" id="nxp-sl-next">&#8594;</button>
+        <div id="nxp-sl-dots"></div>
+        <div id="nxp-sl-count">1 / 1</div>
+      </div>
+
+      <!-- THUMBNAIL STRIP -->
+      <div id="nxp-thumbs"></div>
+
+      <!-- LOADER (scrape sırasında) -->
+      <div id="nxp-loader" style="display:none">
+        <div class="nxp-spinner"></div>
+        <span id="nxp-loader-msg">İlan bilgileri alınıyor…</span>
+      </div>
+
+      <!-- BODY -->
+      <div id="nxp-body" style="display:none">
+        <div id="nxp-m-tag"></div>
+        <h2 id="nxp-m-title"></h2>
+        <div id="nxp-m-loc">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <span id="nxp-m-loc-text"></span>
+        </div>
+        <div id="nxp-m-stats"></div>
+        <div id="nxp-m-feats"></div>
+        <div id="nxp-m-desc"></div>
+        <div id="nxp-m-price-bar">
+          <span class="nxp-price-lbl">Satış Fiyatı</span>
+          <span id="nxp-m-price">—</span>
+        </div>
+        <div id="nxp-m-agent"></div>
+        <div id="nxp-m-actions">
+          <a class="nxp-btn nxp-btn-gold" id="nxp-m-link" href="#" target="_blank" rel="noopener">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            CB'de Aç
+          </a>
+          <button class="nxp-btn nxp-btn-out" id="nxp-m-close2">Kapat</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  // ── NexaPreview ─────────────────────────────────────────────────────────────
+  (function () {
+    'use strict';
+    var images = [], curIdx = 0, swipeX0 = null, swipeActive = false;
+
+    function $(id){ return document.getElementById(id); }
+    function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+    // ── Slider ──────────────────────────────────────────────────────────────
+    function buildSlider(imgs){
+      images = imgs.length ? imgs : [''];
+      curIdx = 0;
+      var track  = $('nxp-sl-track');
+      var dots   = $('nxp-sl-dots');
+      var thumbs = $('nxp-thumbs');
+
+      track.innerHTML = images.map(function(src, i){
+        return src
+          ? '<div class="nxp-slide"><img src="'+esc(src)+'" alt="Fotoğraf '+(i+1)+'" loading="eager"><div class="nxp-slide-overlay"></div></div>'
+          : '<div class="nxp-slide"><div class="nxp-no-img">Görsel mevcut değil</div></div>';
+      }).join('');
+
+      dots.innerHTML = images.length > 1
+        ? images.map(function(_,i){ return '<button class="nxp-dot'+(i===0?' active':'')+'" data-i="'+i+'"></button>'; }).join('')
+        : '';
+
+      thumbs.innerHTML = images.length > 1
+        ? images.map(function(src,i){
+            return '<div class="nxp-thumb'+(i===0?' active':'')+'" data-i="'+i+'"><img src="'+esc(src)+'" alt="" loading="lazy"></div>';
+          }).join('')
+        : '';
+
+      // Thumbnail ve dot click — event delegation
+      dots.addEventListener('click', function(e){
+        var btn = e.target.closest('.nxp-dot');
+        if(btn) goSlide(+btn.getAttribute('data-i'));
+      });
+      thumbs.addEventListener('click', function(e){
+        var th = e.target.closest('.nxp-thumb');
+        if(th) goSlide(+th.getAttribute('data-i'));
+      });
+
+      updateSlider();
+    }
+
+    function updateSlider(){
+      var n = images.length;
+      $('nxp-sl-track').style.transform = 'translateX(-'+curIdx*100+'%)';
+      $('nxp-sl-count').textContent = (curIdx+1)+' / '+n;
+
+      document.querySelectorAll('.nxp-dot').forEach(function(d,i){ d.classList.toggle('active', i===curIdx); });
+      var ths = $('nxp-thumbs').querySelectorAll('.nxp-thumb');
+      ths.forEach(function(t,i){
+        t.classList.toggle('active', i===curIdx);
+        if(i===curIdx) t.scrollIntoView({behavior:'smooth',inline:'nearest',block:'nearest'});
+      });
+      document.querySelectorAll('.nxp-sl-btn').forEach(function(b){ b.style.display = n>1?'':'none'; });
+      $('nxp-sl-wrap').style.display = '';
+      $('nxp-thumbs').style.display = n>1 ? '' : 'none';
+    }
+
+    function goSlide(idx){
+      curIdx = ((idx % images.length) + images.length) % images.length;
+      updateSlider();
+    }
+
+    // Swipe
+    $('nxp-sl-track').addEventListener('mousedown',  function(e){ swipeX0=e.clientX; swipeActive=true; });
+    $('nxp-sl-track').addEventListener('touchstart', function(e){ swipeX0=e.touches[0].clientX; swipeActive=true; });
+    $('nxp-sl-track').addEventListener('mousemove',  function(e){
+      if(!swipeActive) return;
+      $('nxp-sl-track').style.transition='none';
+      $('nxp-sl-track').style.transform='translateX(calc(-'+curIdx*100+'% + '+(e.clientX-swipeX0)+'px))';
+    });
+    $('nxp-sl-track').addEventListener('touchmove', function(e){
+      if(!swipeActive) return;
+      $('nxp-sl-track').style.transition='none';
+      $('nxp-sl-track').style.transform='translateX(calc(-'+curIdx*100+'% + '+(e.touches[0].clientX-swipeX0)+'px))';
+    });
+    function swipeEnd(e){
+      if(!swipeActive) return;
+      swipeActive=false;
+      var dx = ((e.changedTouches?e.changedTouches[0]:e).clientX)-swipeX0;
+      $('nxp-sl-track').style.transition='transform .4s cubic-bezier(.22,.61,.36,1)';
+      if(Math.abs(dx)>50) goSlide(curIdx+(dx<0?1:-1));
+      else updateSlider();
+    }
+    $('nxp-sl-track').addEventListener('mouseup',    swipeEnd);
+    $('nxp-sl-track').addEventListener('touchend',   swipeEnd);
+    $('nxp-sl-track').addEventListener('mouseleave', function(){ if(swipeActive){swipeActive=false; updateSlider();} });
+
+    $('nxp-sl-prev').addEventListener('click', function(){ goSlide(curIdx-1); });
+    $('nxp-sl-next').addEventListener('click', function(){ goSlide(curIdx+1); });
+
+    // Klavye
+    document.addEventListener('keydown', function(e){
+      if(!$('nxp-overlay').classList.contains('nxp-open')) return;
+      if(e.key==='ArrowLeft')  goSlide(curIdx-1);
+      if(e.key==='ArrowRight') goSlide(curIdx+1);
+      if(e.key==='Escape')     closeModal();
+    });
+
+    // ── Render ──────────────────────────────────────────────────────────────
+    function render(d){
+      // Slider
+      buildSlider(d.images || []);
+
+      // Tag, başlık, lokasyon
+      $('nxp-m-tag').textContent = (d.type||'İlan')+' · '+(d.status||'Satılık');
+      $('nxp-m-title').textContent = d.title || '—';
+      $('nxp-m-loc-text').textContent = d.location || '—';
+      $('nxp-m-price').textContent = d.price || 'Fiyat sorunuz';
+      $('nxp-m-link').href = d.cb_url || '#';
+
+      // Stats (rooms, sqm, type, status + ilk 2 feature)
+      var statsData = [];
+      if(d.rooms)  statsData.push({l:'Oda',   v:d.rooms});
+      if(d.sqm)    statsData.push({l:'Alan',   v:d.sqm});
+      if(d.status) statsData.push({l:'Durum',  v:d.status});
+      if(d.type)   statsData.push({l:'Tür',    v:d.type});
+      var usedLabels = new Set(statsData.map(function(s){return s.l.toLowerCase();}));
+      (d.features||[]).forEach(function(f){
+        if(statsData.length>=6) return;
+        if(!usedLabels.has(f.label.toLowerCase())){
+          statsData.push({l:f.label, v:f.value});
+          usedLabels.add(f.label.toLowerCase());
+        }
+      });
+      $('nxp-m-stats').innerHTML = statsData.slice(0,6).map(function(s){
+        return '<div class="nxp-stat"><span class="nxp-stat-l">'+esc(s.l)+'</span><span class="nxp-stat-v">'+esc(s.v)+'</span></div>';
+      }).join('');
+
+      // Features (stats'ta gösterilmeyenler)
+      var restFeats = (d.features||[]).filter(function(f){
+        return !usedLabels.has(f.label.toLowerCase());
+      });
+      $('nxp-m-feats').innerHTML = restFeats.length
+        ? '<div class="nxp-feats-title">Özellikler</div><div class="nxp-feat-grid">'
+          + restFeats.map(function(f){
+              return '<div class="nxp-feat-row"><span class="fl">'+esc(f.label)+'</span><span class="fv">'+esc(f.value)+'</span></div>';
+            }).join('')
+          + '</div>'
+        : '';
+
+      // Açıklama
+      var descEl = $('nxp-m-desc');
+      if(d.description){ descEl.textContent=d.description; descEl.style.display=''; }
+      else descEl.style.display='none';
+
+      // Danışman
+      var ag = d.agent || {};
+      $('nxp-m-agent').innerHTML = (ag.img
+        ? '<img src="'+esc(ag.img)+'" alt="'+esc(ag.name||'')+'">'
+        : '<div class="nxp-agent-av-placeholder">👤</div>')
+        + '<div><div class="nxp-aname">'+esc(ag.name||'Danışman')+'</div>'
+        + '<div class="nxp-aoff">'+esc(ag.office||'Coldwell Banker')+'</div></div>';
+
+      $('nxp-loader').style.display='none';
+      $('nxp-body').style.display='';
+    }
+
+    // ── open / close ─────────────────────────────────────────────────────────
+    function openModal(cbUrl){
+      if(!cbUrl) return;
+      console.log('[NexaPreview] →', cbUrl);
+
+      // Reset
+      images=[]; curIdx=0;
+      $('nxp-sl-track').innerHTML='';
+      $('nxp-sl-dots').innerHTML='';
+      $('nxp-thumbs').innerHTML='';
+      $('nxp-sl-count').textContent='';
+      $('nxp-sl-wrap').style.display='none';
+      $('nxp-thumbs').style.display='none';
+      $('nxp-body').style.display='none';
+      $('nxp-loader').style.display='flex';
+      $('nxp-loader-msg').textContent='İlan bilgileri alınıyor…';
+      $('nxp-m-link').href = cbUrl;
+
+      $('nxp-overlay').classList.add('nxp-open');
+      document.body.style.overflow='hidden';
+      $('nxp-modal').scrollTop=0;
+
+      fetch('/api/listing/preview?url='+encodeURIComponent(cbUrl))
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if(!d.ok) throw new Error(d.error||'Bilinmeyen hata');
+          render(d);
+        })
+        .catch(function(err){
+          $('nxp-loader').style.display='flex';
+          $('nxp-loader-msg').textContent='⚠ '+(err.message||'Sayfa alınamadı');
+        });
+    }
+
+    function closeModal(){
+      $('nxp-overlay').classList.remove('nxp-open');
+      document.body.style.overflow='';
+    }
+
+    $('nxp-close').addEventListener('click',   closeModal);
+    $('nxp-m-close2').addEventListener('click', closeModal);
+    $('nxp-overlay').addEventListener('click', function(e){ if(e.target===$('nxp-overlay')) closeModal(); });
+
+    window.NexaPreview = { open: openModal, close: closeModal };
+  })();
   </script>
 </body>
 </html>
